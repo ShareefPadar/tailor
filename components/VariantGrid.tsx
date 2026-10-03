@@ -2,8 +2,8 @@ import type { Round } from "../lib/store";
 import type { Tokens } from "../lib/types";
 import { VariantCard } from "./VariantCard";
 
-// 3 across when the canvas is at least 700px wide (container query), otherwise 1.
-const GRID = "mx-auto grid max-w-md grid-cols-1 gap-5 @[700px]:max-w-none @[700px]:grid-cols-3";
+// 3 across when the canvas is at least 640px wide (container query), otherwise 1.
+const GRID = "mx-auto grid max-w-md grid-cols-1 gap-4 @[640px]:max-w-none @[640px]:grid-cols-3";
 
 export interface RoundActions {
   onPick: (variantId: string) => void;
@@ -47,7 +47,7 @@ export function VariantSkeletons() {
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex flex-col gap-2.5">
             <div className="mx-1 h-3 w-20 animate-shimmer rounded-full bg-fill-2" />
-            <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-hairline bg-white p-4 shadow-frame">
+            <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-hairline bg-white p-3 shadow-frame">
               <div className="w-full max-w-[220px] animate-shimmer space-y-3">
                 <div className="h-4 w-2/3 rounded-full bg-fill-2" />
                 <div className="h-3 w-full rounded-full bg-fill" />

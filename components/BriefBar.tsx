@@ -33,7 +33,7 @@ export function BriefBar({ value, onChange, loading, showPresets, onGenerate }: 
                 onChange(preset.brief);
                 submit(preset.brief);
               }}
-              className={`${GLASS} h-7 rounded-full px-3 text-[12px] font-medium shadow-frame transition-colors duration-150 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`${GLASS} h-7 rounded-full px-3 text-[12px] font-medium transition-transform duration-150 hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {preset.label}
             </button>
@@ -41,7 +41,7 @@ export function BriefBar({ value, onChange, loading, showPresets, onGenerate }: 
         </div>
       )}
       <form
-        className={`${GLASS} flex items-center gap-2 rounded-2xl py-1.5 pl-4 pr-1.5 shadow-float transition-colors duration-150 focus-within:border-black/25`}
+        className={`${GLASS} flex items-center gap-2 rounded-full py-1.5 pl-5 pr-1.5 transition-colors duration-150 focus-within:border-black/20`}
         onSubmit={(e) => {
           e.preventDefault();
           submit(trimmed);

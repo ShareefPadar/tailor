@@ -11,7 +11,7 @@ export function RoundsSidebar({ rounds, shownId, onSelect }: RoundsSidebarProps)
   return (
     <nav
       aria-label="Rounds"
-      className="flex shrink-0 gap-1 overflow-x-auto border-b border-hairline bg-white px-3 py-2 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:border-b-0 lg:border-r lg:py-4"
+      className="glass flex shrink-0 gap-1 overflow-x-auto rounded-2xl px-2 py-2 lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:py-3"
     >
       <h2 className={`${LABEL} hidden px-2 pb-2 lg:block`}>Rounds</h2>
       {rounds.length === 0 && <p className="px-2 py-1 text-ink-2">No rounds yet.</p>}

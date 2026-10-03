@@ -2,7 +2,8 @@
 
 export const LABEL = "text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2";
 
-export const GLASS = "border border-hairline bg-white/75 backdrop-blur-xl backdrop-saturate-150";
+// Liquid-glass surface (defined in app/globals.css). It sets its own border and shadow.
+export const GLASS = "glass";
 
 const BUTTON =
   "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium " +

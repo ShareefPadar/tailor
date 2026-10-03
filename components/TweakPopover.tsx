@@ -29,9 +29,12 @@ export function TweakPopover({ base, onPreview, onApply, onClose }: TweakPopover
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Bring the whole panel into view when it opens (the canvas reserves room for the prompt bar).
+  // Desktop: bring the whole floating panel into view when it opens. Instant, not smooth: a smooth
+  // scroll depends on animation frames and can be dropped; the panel's own fade-in softens the jump.
   useEffect(() => {
-    panel.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      panel.current?.scrollIntoView({ block: "nearest" });
+    }
   }, []);
 
   const update = (change: Partial<Tokens>) => {
@@ -41,12 +44,13 @@ export function TweakPopover({ base, onPreview, onApply, onClose }: TweakPopover
   };
 
   return (
-    // The ::after spacer extends the scroll area so the panel can clear the floating prompt bar.
+    // Desktop: floats under the frame; the ::after spacer extends the scroll area so the panel can
+    // clear the floating prompt bar. Below 1024px: in the page flow, right under the Tweak button.
     <div
       ref={panel}
       role="dialog"
       aria-label="Tweak variant"
-      className={`${GLASS} absolute left-0 top-full z-10 mt-2 w-72 max-w-full animate-rise space-y-3.5 rounded-2xl p-4 shadow-float after:pointer-events-none after:absolute after:left-0 after:top-full after:h-48 after:w-px after:content-['']`}
+      className={`${GLASS} relative animate-rise space-y-3.5 rounded-2xl p-4 lg:absolute lg:left-0 lg:top-full lg:z-10 lg:mt-2 lg:w-72 lg:max-w-full lg:after:pointer-events-none lg:after:absolute lg:after:left-0 lg:after:top-full lg:after:h-48 lg:after:w-px lg:after:content-['']`}
     >
       {TWEAKABLE.map((key) => (
         <TokenControl key={key} tokenKey={key} tokens={draft} onChange={update} />

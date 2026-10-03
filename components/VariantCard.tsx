@@ -51,7 +51,7 @@ export function VariantCard({ variant, mark, roundHasPick, actions }: VariantCar
         {mark === "rejected" && <span className={`${BADGE} bg-fill-2 text-ink-2`}>Rejected</span>}
       </header>
       <div
-        className={`flex min-h-[360px] flex-1 items-center justify-center rounded-2xl border border-hairline bg-white p-4 shadow-frame transition-[opacity,box-shadow] duration-200 ease-out ${dimmed} ${ring}`}
+        className={`flex min-h-[360px] flex-1 items-center justify-center rounded-2xl border border-hairline bg-white p-3 shadow-frame transition-[opacity,box-shadow] duration-200 ease-out ${dimmed} ${ring}`}
       >
         <Render spec={variant.layout} tokens={preview ?? variant.tokens} />
       </div>

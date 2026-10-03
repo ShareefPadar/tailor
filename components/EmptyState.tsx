@@ -23,7 +23,7 @@ export function EmptyState({ disabled, onPreset }: EmptyStateProps) {
             type="button"
             disabled={disabled}
             onClick={() => onPreset(preset.brief)}
-            className="group flex flex-col gap-1 rounded-2xl border border-hairline bg-white p-4 text-left shadow-frame transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-float disabled:cursor-not-allowed disabled:opacity-50"
+            className="group flex flex-col gap-1 glass rounded-2xl p-4 text-left transition-transform duration-200 ease-out hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className="flex items-center justify-between text-[15px] font-medium">
               {preset.label}

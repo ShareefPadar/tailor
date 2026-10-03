@@ -88,7 +88,7 @@ export default function Home() {
     : "An AI co-designer that learns your style.";
 
   return (
-    <div className="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
+    <div className="bg-dots flex min-h-dvh flex-col gap-3 p-3 lg:h-dvh lg:overflow-hidden">
       <Toolbar
         title={title}
         busy={loading}
@@ -97,7 +97,7 @@ export default function Home() {
           dispatch({ type: "RESET" });
         }}
       />
-      <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[200px_minmax(0,1fr)_300px] 2xl:grid-cols-[220px_minmax(0,1fr)_320px]">
         <RoundsSidebar rounds={state.rounds} shownId={shownRound?.id} onSelect={setShownRoundId} />
         <Canvas
           error={state.status === "error"}
@@ -132,7 +132,7 @@ export default function Home() {
             />
           )}
         </Canvas>
-        <aside className="min-h-0 border-t border-hairline bg-white lg:overflow-y-auto lg:border-l lg:border-t-0">
+        <aside className="glass min-h-0 rounded-2xl lg:overflow-y-auto">
           <ProfilePanel
             profile={profile}
             onEdit={edit}

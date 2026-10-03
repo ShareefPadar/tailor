@@ -507,15 +507,18 @@ An editor layout, as in Figma or Stitch, in an Apple-inspired light style. Inspi
 Theme tokens live in `app/globals.css` and are used through Tailwind classes. Shared class strings live in `components/ui.ts`.
 
 - **Type:** `-apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif`. 13px UI text, 11px uppercase section labels, 17px summary.
-- **Colour (light only, monochrome):** canvas `#f5f5f7`, surfaces white, glass `white/75` with backdrop blur, hairlines `black/8`, text `#1d1d1f` (ink), secondary `#6e6e73` (ink-2). The accent is ink. Red is used only for the error state.
+- **Colour (light only, monochrome):** canvas `#f5f5f7`, hairlines `black/8`, text `#1d1d1f` (ink), secondary `#6e6e73` (ink-2). The accent is ink. Red is used only for the error state.
+- **Workspace background (`bg-dots`):** the canvas colour with a 22px dot grid, as in Stitch or Miro, over a very faint colour wash.
+- **Liquid glass (`glass`):** translucent white gradient, 22px backdrop blur with raised saturation, a bright top edge and a soft drop shadow. Used for the navigation and control layer: toolbar, both side panels, prompt bar, preset chips and cards, error banner, tweak popover. Content surfaces (variant frames) stay opaque white. Falls back to opaque white under `prefers-reduced-transparency`.
 - **Shape and depth:** panels 12–16px radius, controls 8–10px, pills fully round, soft two-layer shadows.
 - **Motion:** 150–200ms ease-out, CSS only, disabled under `prefers-reduced-motion`.
 - **Profile tokens only style the variant previews, never the shell.**
 
 ### 12.2 Layout
 
-- **Toolbar** (48px, glass, bottom hairline): app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
-- **Body ≥ 1024px:** three panes filling the viewport, each scrolling on its own: rounds sidebar `220px`, canvas `1fr`, inspector `320px`.
+- Every panel floats over the dotted workspace with 12px gaps and 16px corner radius.
+- **Toolbar** (48px, glass): app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
+- **Body ≥ 1024px:** three panes filling the viewport, each scrolling on its own: rounds sidebar `200px`, canvas `1fr`, inspector `300px` (`220px` and `320px` from 1536px).
 - **Body < 1024px:** one scrolling column: rounds as a horizontal strip, canvas, inspector underneath, prompt bar sticky at the bottom.
 
 ### 12.3 Rounds sidebar
@@ -524,11 +527,11 @@ Titled "Rounds". One row per round, oldest first: number, truncated brief, and `
 
 ### 12.4 Canvas
 
-- Background `#f5f5f7`.
-- **VariantGrid:** 3 columns when the canvas is at least 700px wide (container query), otherwise 1.
+- Transparent, so the dotted workspace shows through.
+- **VariantGrid:** 3 columns when the canvas is at least 640px wide (container query), otherwise 1.
 - **VariantCard (a frame):** the label above the frame, with a "Picked" or "Rejected" badge. Frame: white, hairline border, 16px radius, min-height 360px, content centred. Below: the applied note, chips `Uses: 16px · #16a34a · Compact` when `enforced` is non-empty, then actions Pick (primary), Reject (secondary), Tweak (ghost). Earlier rounds show no actions.
   - Picked: ink ring around the frame. Rejected: frame at 50% opacity. After a pick, unpicked frames go to 70% opacity until rejected or the next round.
-- **Prompt bar (BriefBar):** floats at the bottom centre of the canvas: glass, 16px radius, input (placeholder: "Describe a component, e.g. pricing card for a food delivery app") and a round send button. Disabled while loading or when the input is empty. Enter submits. Three preset chips sit above it; tapping one fills the input and generates.
+- **Prompt bar (BriefBar):** floats at the bottom centre of the canvas: glass, pill-shaped, input (placeholder: "Describe a component, e.g. pricing card for a food delivery app") and a round send button. Disabled while loading or when the input is empty. Enter submits. Three preset chips sit above it; tapping one fills the input and generates.
 - **TweakPopover:** glass panel anchored to its frame. Controls: radius slider 0–24 step 2; color via 6 swatches (#111827, #2563eb, #7c3aed, #16a34a, #e11d48, #ea580c) plus native color input; density segmented control; tone select. The card preview updates live. Apply commits a tweak action with changed tokens only. Cancel reverts. Escape closes.
 
 ### 12.5 Inspector (ProfilePanel)

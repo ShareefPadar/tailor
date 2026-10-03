@@ -9,7 +9,7 @@ interface ToolbarProps {
 
 export function Toolbar({ title, busy, onReset }: ToolbarProps) {
   return (
-    <header className="z-30 grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-hairline bg-white/75 px-4 backdrop-blur-xl backdrop-saturate-150">
+    <header className="glass sticky top-3 z-30 grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-2xl px-3 lg:static">
       <div className="flex items-center gap-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-white">
           <Layers2 size={14} aria-hidden="true" />

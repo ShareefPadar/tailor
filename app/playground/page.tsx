@@ -55,19 +55,19 @@ const cases: { spec: Node; tokens: Tokens }[] = [
 
 export default function PlaygroundPage() {
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-xl font-semibold">Renderer playground</h1>
-      <div className="grid gap-6 md:grid-cols-3">
-        {cases.map(({ spec, tokens }, i) => (
-          <section key={SEEDS[i].label}>
-            <p className="mb-2 text-sm font-medium text-zinc-600">
-              {SEEDS[i].label}
-            </p>
-            <div className="flex min-h-[360px] items-center rounded-xl bg-[#f4f4f5] p-6">
-              <Render spec={spec} tokens={tokens} />
-            </div>
-          </section>
-        ))}
+    <main className="bg-dots min-h-dvh p-6">
+      <div className="mx-auto max-w-5xl">
+        <h1 className="mb-6 text-[15px] font-semibold">Renderer playground</h1>
+        <div className="grid gap-4 md:grid-cols-3">
+          {cases.map(({ spec, tokens }, i) => (
+            <section key={SEEDS[i].label} className="flex flex-col gap-2.5">
+              <p className="px-1 text-[12px] font-medium text-ink-2">{SEEDS[i].label}</p>
+              <div className="flex min-h-[360px] flex-1 items-center rounded-2xl border border-hairline bg-white p-3 shadow-frame">
+                <Render spec={spec} tokens={tokens} />
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </main>
   );
