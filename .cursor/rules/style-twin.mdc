@@ -1,0 +1,35 @@
+---
+description: Style Twin project rules
+globs:
+alwaysApply: true
+---
+
+# Style Twin — project rules
+
+Style Twin is an AI co-designer that learns a designer's style. One-day prototype for a job application challenge. Quality and clarity matter more than feature count.
+
+## Read first
+1. @PRD.md — what and why
+2. @SPEC.md — exact types, rules, prompts, UI. Source of truth for implementation.
+3. @TASKS.md — build order. Work one phase at a time.
+
+## How to work
+- Do one phase from TASKS.md at a time. When done, run checks, stop, summarize, list files changed, explain how to test, and wait for my go-ahead.
+- Follow SPEC.md exactly. If something is ambiguous or missing, ask instead of inventing.
+- Don't build ahead into later phases or add features not in the PRD.
+
+## Hard rules
+- Only these dependencies: zod, @google/genai, lucide-react; dev vitest, tsx. Ask before adding anything else.
+- TypeScript strict. No `any`. No `@ts-ignore`.
+- Tailwind for all styling. Inline styles only inside components/render/Render.tsx.
+- Components under ~150 lines.
+- API key only in server code (lib/llm.ts, API routes) and env vars. Never import lib/llm.ts or lib/generate.ts from client components.
+- lib/llm.ts is the only file that imports the Gemini SDK.
+- lib/profile.ts is pure and deterministic: no React, no fetch, no Date.now(), no random ids.
+- Profile tokens style only the variant previews, never the app shell.
+- Never commit .env.local.
+
+## Done means
+- `npm run build` passes; `npm test` passes from Phase 4 on.
+- No console errors or React key warnings.
+- The phase's "Done when" check in TASKS.md is met.
