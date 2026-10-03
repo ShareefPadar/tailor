@@ -1,13 +1,8 @@
 import { z } from "zod";
-import { DEFAULT_TOKENS } from "./tokens";
+import { DEFAULT_TOKENS, DENSITIES, FONTS, SHADOWS, TONES, TOKEN_KEYS } from "./tokens";
 import type { Node, ProfilePayload, Variant } from "./types";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const DENSITIES = ["compact", "comfortable", "spacious"] as const;
-const SHADOWS = ["none", "soft", "strong"] as const;
-const FONTS = ["Inter", "DM Sans", "Space Grotesk"] as const;
-const TONES = ["neutral", "friendly", "playful", "premium"] as const;
-const TOKEN_KEYS = ["radius", "primary", "density", "shadow", "font", "tone"] as const;
 const NODE_TYPES = ["card", "heading", "text", "button", "input", "list"];
 
 const MAX_TEXT = 120;

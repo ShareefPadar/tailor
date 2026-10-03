@@ -1,5 +1,21 @@
 import type { CSSProperties } from "react";
-import type { Density, FontName, Shadow, TokenKey, Tokens } from "./types";
+import type { CategoryKey, Density, FontName, Shadow, TokenKey, Tokens, Tone } from "./types";
+
+// Option order matters: it breaks ties between equally scored options (SPEC §8.2).
+export const DENSITIES = ["compact", "comfortable", "spacious"] as const satisfies readonly Density[];
+export const SHADOWS = ["none", "soft", "strong"] as const satisfies readonly Shadow[];
+export const FONTS = ["Inter", "DM Sans", "Space Grotesk"] as const satisfies readonly FontName[];
+export const TONES = ["neutral", "friendly", "playful", "premium"] as const satisfies readonly Tone[];
+
+export const TOKEN_KEYS = ["radius", "primary", "density", "shadow", "font", "tone"] as const satisfies readonly TokenKey[];
+export const CATEGORY_KEYS = ["density", "shadow", "font", "tone"] as const satisfies readonly CategoryKey[];
+
+export const CATEGORY_OPTIONS: Record<CategoryKey, readonly Tokens[CategoryKey][]> = {
+  density: DENSITIES,
+  shadow: SHADOWS,
+  font: FONTS,
+  tone: TONES,
+};
 
 export const DEFAULT_TOKENS: Tokens = {
   radius: 8,
@@ -53,7 +69,7 @@ const FONT_VARS: Record<FontName, string> = {
   "Space Grotesk": "var(--font-space-grotesk)",
 };
 
-const SHADOWS: Record<Shadow, string> = {
+const SHADOW_CSS: Record<Shadow, string> = {
   none: "none",
   soft: "0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06)",
   strong: "0 10px 30px rgba(0,0,0,.18)",
@@ -90,7 +106,7 @@ export function tokensToStyle(tokens: Tokens): CSSProperties {
     "--st-primary": tokens.primary,
     "--st-on-primary": contrastText(tokens.primary),
     "--st-font": FONT_VARS[tokens.font],
-    "--st-shadow": SHADOWS[tokens.shadow],
+    "--st-shadow": SHADOW_CSS[tokens.shadow],
     "--st-pad": d.pad,
     "--st-gap": d.gap,
     "--st-btn-pad": d.btn,
