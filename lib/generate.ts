@@ -8,7 +8,7 @@ export class GenerationError extends Error {}
 
 async function attempt(user: string, temperature: number): Promise<ValidationResult> {
   try {
-    const raw = await generateJSON({ system: GENERATION_SYSTEM, user, temperature });
+    const raw = await generateJSON({ system: GENERATION_SYSTEM, user, temperature, retryTransient: true });
     return validateVariants(raw);
   } catch (e) {
     // Bad JSON is retryable. Timeouts, network and config errors are not.
