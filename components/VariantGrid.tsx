@@ -1,13 +1,27 @@
-import type { Variant } from "../lib/types";
+import type { Round } from "../lib/store";
 import { VariantCard } from "./VariantCard";
 
 const GRID = "grid grid-cols-1 gap-6 xl:grid-cols-3";
 
-export function VariantGrid({ variants }: { variants: Variant[] }) {
+interface VariantGridProps {
+  round: Round;
+  onPick: (variantId: string) => void;
+  onReject: (variantId: string) => void;
+}
+
+export function VariantGrid({ round, onPick, onReject }: VariantGridProps) {
+  const roundHasPick = Object.values(round.marks).includes("picked");
   return (
     <div className={GRID}>
-      {variants.map((variant) => (
-        <VariantCard key={variant.id} variant={variant} />
+      {round.variants.map((variant) => (
+        <VariantCard
+          key={variant.id}
+          variant={variant}
+          mark={round.marks[variant.id]}
+          roundHasPick={roundHasPick}
+          onPick={() => onPick(variant.id)}
+          onReject={() => onReject(variant.id)}
+        />
       ))}
     </div>
   );

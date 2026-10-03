@@ -3,3 +3,17 @@
 @theme inline {
   --font-sans: var(--font-inter);
 }
+
+/* Brief highlight on a profile token row after it changes. */
+@theme {
+  --animate-flash: flash 1.5s ease-out;
+
+  @keyframes flash {
+    from {
+      background-color: #fef9c3;
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+}

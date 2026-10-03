@@ -1,3 +1,4 @@
+import type { SummaryAction } from "./schema";
 import type { ProfilePayload, TokenKey } from "./types";
 
 export const GENERATION_SYSTEM = `You are Style Twin, a UI co-designer. You design small UI components as JSON specs.
@@ -64,4 +65,28 @@ Make the 3 variants differ in layout, hierarchy, and copy, not style.
 
 export function buildUserPrompt(brief: string, payload: ProfilePayload | null): string {
   return payload === null ? seedPrompt(brief) : profilePrompt(brief, payload);
+}
+
+// ---------- Summary (SPEC 10.4) ----------
+
+export const SUMMARY_SYSTEM = `You describe a designer's visual taste from their actions on UI variants.
+Return ONLY JSON: {"summary": string}.
+One sentence, under 15 words, plain words. No raw values like "radius 16" or hex codes.
+Picks and tweaks are likes. Rejects are dislikes.`;
+
+function describeTokens(t: SummaryAction["tokens"]): string {
+  const parts: string[] = [];
+  if (t.radius !== undefined) parts.push(`radius ${t.radius}`);
+  if (t.primary !== undefined) parts.push(`color ${t.primary}`);
+  if (t.density !== undefined) parts.push(t.density);
+  if (t.shadow !== undefined) parts.push(`${t.shadow} shadow`);
+  if (t.font !== undefined) parts.push(t.font);
+  if (t.tone !== undefined) parts.push(`${t.tone} tone`);
+  return parts.join(", ");
+}
+
+export function buildSummaryPrompt(actions: SummaryAction[]): string {
+  return actions
+    .map((a) => `${a.kind.toUpperCase()} "${a.label}": ${describeTokens(a.tokens)}`)
+    .join("\n");
 }

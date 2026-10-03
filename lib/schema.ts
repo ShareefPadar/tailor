@@ -146,3 +146,32 @@ export const profilePayloadSchema: z.ZodType<ProfilePayload> = z.object({
   }),
   summary: z.string().max(300).nullable(),
 });
+
+// ---------- /api/summarize ----------
+
+const summaryAction = z.object({
+  kind: z.enum(["pick", "reject", "tweak"]),
+  label: z.string().max(40),
+  tokens: strictTokens.partial(),
+});
+
+export type SummaryAction = z.infer<typeof summaryAction>;
+
+// The client sends the last 10 actions, oldest first; keep the last 10 if more arrive.
+export const summarizeRequestSchema = z.object({
+  actions: z
+    .array(summaryAction)
+    .min(1)
+    .max(100)
+    .transform((actions) => actions.slice(-10)),
+});
+
+const MAX_SUMMARY = 140;
+
+// null for anything that is not a usable one-line summary.
+export function parseSummary(raw: unknown): string | null {
+  const parsed = z.object({ summary: z.string() }).safeParse(raw);
+  if (!parsed.success) return null;
+  const summary = parsed.data.summary.trim().slice(0, MAX_SUMMARY);
+  return summary === "" ? null : summary;
+}

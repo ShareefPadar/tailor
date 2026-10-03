@@ -1,7 +1,7 @@
 import { generateJSON, LlmParseError } from "./llm";
 import { applyEnforcement } from "./profile";
-import { buildUserPrompt, GENERATION_SYSTEM } from "./prompts";
-import { validateVariants, type ValidationResult } from "./schema";
+import { buildSummaryPrompt, buildUserPrompt, GENERATION_SYSTEM, SUMMARY_SYSTEM } from "./prompts";
+import { parseSummary, validateVariants, type SummaryAction, type ValidationResult } from "./schema";
 import type { ProfilePayload, Variant } from "./types";
 
 export class GenerationError extends Error {}
@@ -32,4 +32,14 @@ export async function generateVariants(
   if (!result.ok) throw new GenerationError(result.error);
 
   return applyEnforcement(result.variants, payload);
+}
+
+// One-line taste summary. Temperature 0.3, no retry. Callers treat any throw as "no summary".
+export async function summarize(actions: SummaryAction[]): Promise<string | null> {
+  const raw = await generateJSON({
+    system: SUMMARY_SYSTEM,
+    user: buildSummaryPrompt(actions),
+    temperature: 0.3,
+  });
+  return parseSummary(raw);
 }

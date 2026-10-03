@@ -2,9 +2,12 @@
 
 import { useCallback, useReducer } from "react";
 import { BriefBar } from "../components/BriefBar";
+import { ProfilePanel } from "../components/ProfilePanel";
 import { RoundView } from "../components/RoundView";
 import { VariantSkeletons } from "../components/VariantGrid";
+import { hasProfile, toPayload } from "../lib/profile";
 import { createInitialState, reducer } from "../lib/store";
+import { useTasteSummary } from "../lib/useTasteSummary";
 import type { Variant } from "../lib/types";
 
 interface GenerateResponse {
@@ -26,19 +29,21 @@ function isGenerateResponse(data: unknown): data is GenerateResponse {
 
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
+  const { profile } = state;
   const loading = state.status === "loading";
   const currentRound = state.rounds[state.rounds.length - 1];
+
+  useTasteSummary(profile.actions, hasProfile(profile), dispatch);
 
   const generate = useCallback(
     async (brief: string) => {
       if (loading) return;
       dispatch({ type: "GENERATE_START", brief });
       try {
-        // Phase 5 sends toPayload(profile) here; until then every round uses the seeds.
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brief, profile: null }),
+          body: JSON.stringify({ brief, profile: toPayload(profile) }),
         });
         const data: unknown = await res.json();
         if (!res.ok || !isGenerateResponse(data)) throw new Error("generation failed");
@@ -53,8 +58,12 @@ export default function Home() {
         dispatch({ type: "GENERATE_ERROR" });
       }
     },
-    [loading],
+    [loading, profile],
   );
+
+  // Ids and timestamps are made here so the reducer stays pure.
+  const mark = (type: "PICK" | "REJECT") => (variantId: string) =>
+    dispatch({ type, variantId, actionId: crypto.randomUUID(), at: Date.now() });
 
   return (
     <>
@@ -62,29 +71,40 @@ export default function Home() {
         <h1 className="text-lg font-semibold">Style Twin</h1>
         <p className="text-sm text-zinc-500">An AI co-designer that learns your style.</p>
       </header>
-      <main className="mx-auto w-full max-w-[1600px] space-y-8 px-6 py-6">
-        <BriefBar
-          loading={loading}
-          emphasizePresets={state.rounds.length === 0}
-          onGenerate={generate}
-        />
-        {state.status === "error" && (
-          <div
-            role="alert"
-            className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          >
-            <span>Couldn&apos;t generate this time. Try again.</span>
-            <button
-              type="button"
-              onClick={() => state.lastBrief && generate(state.lastBrief)}
-              className="rounded-md border border-red-300 bg-white px-3 py-1 font-medium hover:bg-red-100"
+      <div className="mx-auto grid w-full max-w-[1600px] gap-8 px-6 py-6 lg:grid-cols-[1fr_340px]">
+        <main className="min-w-0 space-y-8">
+          <BriefBar
+            loading={loading}
+            emphasizePresets={state.rounds.length === 0}
+            onGenerate={generate}
+          />
+          {state.status === "error" && (
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
             >
-              Try again
-            </button>
-          </div>
-        )}
-        {loading ? <VariantSkeletons /> : currentRound && <RoundView round={currentRound} />}
-      </main>
+              <span>Couldn&apos;t generate this time. Try again.</span>
+              <button
+                type="button"
+                onClick={() => state.lastBrief && generate(state.lastBrief)}
+                className="rounded-md border border-red-300 bg-white px-3 py-1 font-medium hover:bg-red-100"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          {loading ? (
+            <VariantSkeletons />
+          ) : (
+            currentRound && (
+              <RoundView round={currentRound} onPick={mark("PICK")} onReject={mark("REJECT")} />
+            )
+          )}
+        </main>
+        <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto">
+          <ProfilePanel profile={profile} />
+        </aside>
+      </div>
     </>
   );
 }

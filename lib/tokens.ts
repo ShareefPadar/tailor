@@ -10,6 +10,15 @@ export const TONES = ["neutral", "friendly", "playful", "premium"] as const sati
 export const TOKEN_KEYS = ["radius", "primary", "density", "shadow", "font", "tone"] as const satisfies readonly TokenKey[];
 export const CATEGORY_KEYS = ["density", "shadow", "font", "tone"] as const satisfies readonly CategoryKey[];
 
+export const TOKEN_NAMES: Record<TokenKey, string> = {
+  radius: "Radius",
+  primary: "Color",
+  density: "Density",
+  shadow: "Shadow",
+  font: "Font",
+  tone: "Tone",
+};
+
 export const CATEGORY_OPTIONS: Record<CategoryKey, readonly Tokens[CategoryKey][]> = {
   density: DENSITIES,
   shadow: SHADOWS,
