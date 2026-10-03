@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { diffTokens } from "../lib/tokens";
 import type { TokenKey, Tokens } from "../lib/types";
 import { TokenControl } from "./TokenControl";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, GLASS } from "./ui";
 
 const TWEAKABLE: readonly TokenKey[] = ["radius", "primary", "density", "tone"];
 
@@ -16,6 +17,7 @@ interface TweakPopoverProps {
 
 export function TweakPopover({ base, onPreview, onApply, onClose }: TweakPopoverProps) {
   const [draft, setDraft] = useState(base);
+  const panel = useRef<HTMLDivElement>(null);
   const patch = diffTokens(base, draft, TWEAKABLE);
   const changed = Object.keys(patch).length > 0;
 
@@ -27,6 +29,11 @@ export function TweakPopover({ base, onPreview, onApply, onClose }: TweakPopover
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Bring the whole panel into view when it opens (the canvas reserves room for the prompt bar).
+  useEffect(() => {
+    panel.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, []);
+
   const update = (change: Partial<Tokens>) => {
     const next = { ...draft, ...change };
     setDraft(next);
@@ -34,28 +41,21 @@ export function TweakPopover({ base, onPreview, onApply, onClose }: TweakPopover
   };
 
   return (
+    // The ::after spacer extends the scroll area so the panel can clear the floating prompt bar.
     <div
+      ref={panel}
       role="dialog"
       aria-label="Tweak variant"
-      className="absolute left-0 top-full z-20 mt-2 w-72 max-w-full space-y-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg"
+      className={`${GLASS} absolute left-0 top-full z-10 mt-2 w-72 max-w-full animate-rise space-y-3.5 rounded-2xl p-4 shadow-float after:pointer-events-none after:absolute after:left-0 after:top-full after:h-48 after:w-px after:content-['']`}
     >
       {TWEAKABLE.map((key) => (
         <TokenControl key={key} tokenKey={key} tokens={draft} onChange={update} />
       ))}
-      <div className="flex justify-end gap-2 pt-1">
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
-        >
+      <div className="flex justify-end gap-1.5 pt-1">
+        <button type="button" onClick={onClose} className={BUTTON_SECONDARY}>
           Cancel
         </button>
-        <button
-          type="button"
-          disabled={!changed}
-          onClick={() => onApply(patch)}
-          className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
+        <button type="button" disabled={!changed} onClick={() => onApply(patch)} className={BUTTON_PRIMARY}>
           Apply
         </button>
       </div>

@@ -41,14 +41,21 @@ export function VariantGrid({ round, actions }: VariantGridProps) {
 
 export function VariantSkeletons() {
   return (
-    <div className="space-y-4" role="status" aria-busy="true">
-      <p className="text-sm text-zinc-500">Designing 3 options…</p>
+    <div className="animate-rise space-y-4" role="status" aria-busy="true">
+      <p className="px-1 text-ink-2">Designing 3 options…</p>
       <div className={GRID}>
         {[0, 1, 2].map((i) => (
-          <div key={i} className="space-y-3">
-            <div className="min-h-[360px] animate-pulse rounded-xl bg-zinc-100" />
-            <div className="h-4 w-1/3 animate-pulse rounded bg-zinc-100" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-zinc-100" />
+          <div key={i} className="flex flex-col gap-2.5">
+            <div className="mx-1 h-3 w-20 animate-shimmer rounded-full bg-fill-2" />
+            <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-hairline bg-white p-4 shadow-frame">
+              <div className="w-full max-w-[220px] animate-shimmer space-y-3">
+                <div className="h-4 w-2/3 rounded-full bg-fill-2" />
+                <div className="h-3 w-full rounded-full bg-fill" />
+                <div className="h-3 w-5/6 rounded-full bg-fill" />
+                <div className="h-9 w-full rounded-xl bg-fill-2" />
+              </div>
+            </div>
+            <div className="mx-1 h-3 w-2/3 animate-shimmer rounded-full bg-fill" />
           </div>
         ))}
       </div>

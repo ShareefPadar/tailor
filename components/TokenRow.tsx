@@ -5,6 +5,7 @@ import { useState } from "react";
 import { displayValue, pickToken, TOKEN_NAMES } from "../lib/tokens";
 import type { TokenKey, Tokens } from "../lib/types";
 import { TokenControl } from "./TokenControl";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY } from "./ui";
 
 interface TokenRowProps {
   tokenKey: TokenKey;
@@ -25,20 +26,21 @@ export function TokenRow({ tokenKey, tokens, confidence, locked, lastChangeId, o
   return (
     <div
       key={lastChangeId ?? "unchanged"}
-      className={`space-y-1.5 rounded-md px-2 py-2 ${lastChangeId ? "animate-flash" : ""}`}
+      className={`space-y-1.5 rounded-lg px-2 py-2 ${lastChangeId ? "animate-flash" : ""}`}
     >
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="text-zinc-500">{name}</span>
-        <span className="flex items-center gap-2 font-medium">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-ink-2">{name}</span>
+        <span className="flex items-center gap-0.5">
           <button
             type="button"
             aria-label={`Edit ${name}`}
+            aria-expanded={draft !== null}
             onClick={() => setDraft(draft ? null : tokens)}
-            className="flex items-center gap-2 rounded px-1 hover:bg-zinc-100"
+            className={`flex h-6 items-center gap-1.5 rounded-md px-1.5 font-medium tabular-nums transition-colors duration-150 hover:bg-fill ${draft ? "bg-fill" : ""}`}
           >
             {tokenKey === "primary" && (
-              <svg width="14" height="14" aria-hidden="true">
-                <rect width="14" height="14" rx="3" fill={tokens.primary} />
+              <svg width="12" height="12" aria-hidden="true">
+                <rect width="12" height="12" rx="3" fill={tokens.primary} />
               </svg>
             )}
             {displayValue(tokenKey, tokens[tokenKey])}
@@ -48,42 +50,40 @@ export function TokenRow({ tokenKey, tokens, confidence, locked, lastChangeId, o
             aria-label={`${locked ? "Unlock" : "Lock"} ${name}`}
             aria-pressed={locked}
             onClick={onToggleLock}
-            className="rounded p-0.5 hover:bg-zinc-100"
+            className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 hover:bg-fill"
           >
-            {locked ? <Lock size={14} className="text-zinc-900" /> : <LockOpen size={14} className="text-zinc-300" />}
+            {locked ? <Lock size={13} className="text-ink" /> : <LockOpen size={13} className="text-ink-3" />}
           </button>
         </span>
       </div>
       {confidence === null ? (
-        <p className="text-xs text-zinc-400">Learning…</p>
+        <p className="text-[11px] text-ink-2">Learning…</p>
       ) : (
-        <svg className="h-1.5 w-full" role="img" aria-label={`Confidence ${percent}%`}>
-          <rect width="100%" height="100%" rx="3" className="fill-zinc-200" />
-          <rect width={`${percent}%`} height="100%" rx="3" className="fill-zinc-900" />
+        <svg className="block h-1 w-full" role="img" aria-label={`Confidence ${percent}%`}>
+          <rect width="100%" height="100%" rx="2" className="fill-fill-2" />
+          <rect width={`${percent}%`} height="100%" rx="2" className="fill-ink" />
         </svg>
       )}
       {draft && (
-        <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+        <div className="animate-rise space-y-3 rounded-xl bg-canvas p-3">
           <TokenControl tokenKey={tokenKey} tokens={draft} onChange={(change) => setDraft({ ...draft, ...change })} />
-          <p className="text-xs text-zinc-500">Saving locks this value.</p>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setDraft(null)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onEdit(pickToken(draft, tokenKey));
-                setDraft(null);
-              }}
-              className="rounded-lg bg-zinc-900 px-3 py-1 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              Save
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-ink-2">Saving locks this value.</p>
+            <div className="flex gap-1.5">
+              <button type="button" onClick={() => setDraft(null)} className={BUTTON_SECONDARY}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onEdit(pickToken(draft, tokenKey));
+                  setDraft(null);
+                }}
+                className={BUTTON_PRIMARY}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}

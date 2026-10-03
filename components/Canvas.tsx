@@ -12,7 +12,7 @@ interface CanvasProps {
 export function Canvas({ children, error, onRetry, promptBar }: CanvasProps) {
   return (
     <main className="relative flex min-h-0 min-w-0 flex-col">
-      <div className="@container min-h-0 flex-1 px-6 pb-48 pt-6 lg:overflow-y-auto">{children}</div>
+      <div className="@container min-h-0 flex-1 scroll-pb-44 px-6 pb-48 pt-6 lg:overflow-y-auto">{children}</div>
       <div className="pointer-events-none sticky bottom-0 z-20 flex justify-center px-4 pb-4 lg:absolute lg:inset-x-0">
         <div className="pointer-events-auto w-full max-w-2xl space-y-2">
           {error && (

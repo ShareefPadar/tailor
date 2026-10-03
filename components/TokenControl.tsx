@@ -11,8 +11,8 @@ const SWATCHES = [
   { hex: "#ea580c", className: "bg-[#ea580c]" },
 ];
 
-const LABEL = "text-xs font-medium text-zinc-500";
-const FIELD = "w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm";
+const LABEL = "flex items-center justify-between text-[12px] text-ink-2";
+const SELECT = "h-8 w-full rounded-lg bg-fill px-2 text-[13px] transition-colors duration-150 hover:bg-fill-2";
 
 interface SegmentedProps<T extends string> {
   tokenKey: TokenKey;
@@ -21,16 +21,17 @@ interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
 }
 
+// Grey track with a white thumb on the selected option.
 function Segmented<T extends string>({ tokenKey, options, value, onChange }: SegmentedProps<T>) {
   return (
-    <div role="group" aria-label={TOKEN_NAMES[tokenKey]} className="flex overflow-hidden rounded-md border border-zinc-300">
+    <div role="group" aria-label={TOKEN_NAMES[tokenKey]} className="flex rounded-[9px] bg-fill-2 p-0.5">
       {options.map((option) => (
         <button
           key={option}
           type="button"
           aria-pressed={option === value}
           onClick={() => onChange(option)}
-          className={`flex-1 px-2 py-1.5 text-xs ${option === value ? "bg-zinc-900 text-white" : "bg-white text-zinc-700 hover:bg-zinc-50"}`}
+          className={`h-7 flex-1 rounded-[7px] text-[12px] transition-[background-color,box-shadow] duration-150 ${option === value ? "bg-white font-medium shadow-sm" : "text-ink-2 hover:text-ink"}`}
         >
           {displayValue(tokenKey, option)}
         </button>
@@ -45,24 +46,27 @@ interface TokenControlProps {
   onChange: (patch: Partial<Tokens>) => void;
 }
 
-// One editing control per token. Used by the tweak popover and by the panel's edit.
+// One editing control per token. Used by the tweak popover and by the inspector's edit.
 export function TokenControl({ tokenKey, tokens, onChange }: TokenControlProps) {
   const title = TOKEN_NAMES[tokenKey];
   switch (tokenKey) {
     case "radius":
       return (
-        <label className="block space-y-1">
-          <span className={LABEL}>{title} · {tokens.radius}px</span>
+        <label className="block space-y-1.5">
+          <span className={LABEL}>
+            {title}
+            <span className="font-medium tabular-nums text-ink">{tokens.radius}px</span>
+          </span>
           <input
             type="range" min={0} max={24} step={2} value={tokens.radius}
             onChange={(e) => onChange({ radius: Number(e.target.value) })}
-            className="w-full accent-zinc-900"
+            className="block w-full accent-ink"
           />
         </label>
       );
     case "primary":
       return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className={LABEL}>{title}</span>
           <div className="flex items-center gap-2">
             {SWATCHES.map((swatch) => (
@@ -72,37 +76,37 @@ export function TokenControl({ tokenKey, tokens, onChange }: TokenControlProps) 
                 aria-label={swatch.hex}
                 aria-pressed={tokens.primary.toLowerCase() === swatch.hex}
                 onClick={() => onChange({ primary: swatch.hex })}
-                className={`h-6 w-6 rounded-full ${swatch.className} ${tokens.primary.toLowerCase() === swatch.hex ? "ring-2 ring-zinc-900 ring-offset-2" : ""}`}
+                className={`h-6 w-6 rounded-full transition-transform duration-150 hover:scale-110 ${swatch.className} ${tokens.primary.toLowerCase() === swatch.hex ? "ring-2 ring-ink ring-offset-2" : ""}`}
               />
             ))}
             <input
               type="color" value={tokens.primary} aria-label="Custom color"
               onChange={(e) => onChange({ primary: e.target.value })}
-              className="h-6 w-8 cursor-pointer rounded border border-zinc-300 bg-white p-0"
+              className="ml-auto h-6 w-8 cursor-pointer rounded-md border border-hairline bg-white p-0"
             />
           </div>
         </div>
       );
     case "density":
       return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className={LABEL}>{title}</span>
           <Segmented tokenKey="density" options={DENSITIES} value={tokens.density} onChange={(density) => onChange({ density })} />
         </div>
       );
     case "shadow":
       return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className={LABEL}>{title}</span>
           <Segmented tokenKey="shadow" options={SHADOWS} value={tokens.shadow} onChange={(shadow) => onChange({ shadow })} />
         </div>
       );
     case "font":
       return (
-        <label className="block space-y-1">
+        <label className="block space-y-1.5">
           <span className={LABEL}>{title}</span>
           <select
-            value={tokens.font} className={FIELD}
+            value={tokens.font} className={SELECT}
             onChange={(e) => onChange({ font: FONTS.find((f) => f === e.target.value) ?? tokens.font })}
           >
             {FONTS.map((font) => <option key={font} value={font}>{font}</option>)}
@@ -111,10 +115,10 @@ export function TokenControl({ tokenKey, tokens, onChange }: TokenControlProps) 
       );
     case "tone":
       return (
-        <label className="block space-y-1">
+        <label className="block space-y-1.5">
           <span className={LABEL}>{title}</span>
           <select
-            value={tokens.tone} className={FIELD}
+            value={tokens.tone} className={SELECT}
             onChange={(e) => onChange({ tone: TONES.find((t) => t === e.target.value) ?? tokens.tone })}
           >
             {TONES.map((tone) => <option key={tone} value={tone}>{displayValue("tone", tone)}</option>)}
