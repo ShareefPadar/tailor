@@ -7,18 +7,22 @@ import type { Tokens, Variant } from "../lib/types";
 import { Render } from "./render/Render";
 import { TweakPopover } from "./TweakPopover";
 
-interface VariantCardProps {
-  variant: Variant;
-  mark: Mark | undefined;
-  roundHasPick: boolean;
+export interface CardActions {
   onPick: () => void;
   onReject: () => void;
   onTweak: (patch: Partial<Tokens>) => void;
 }
 
+interface VariantCardProps {
+  variant: Variant;
+  mark: Mark | undefined;
+  roundHasPick: boolean;
+  actions?: CardActions; // omitted for earlier rounds, which are read-only
+}
+
 const BUTTON = "rounded-lg px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40";
 
-export function VariantCard({ variant, mark, roundHasPick, onPick, onReject, onTweak }: VariantCardProps) {
+export function VariantCard({ variant, mark, roundHasPick, actions }: VariantCardProps) {
   const [tweaking, setTweaking] = useState(false);
   const [preview, setPreview] = useState<Tokens | null>(null); // live tweak preview
   const closeTweak = () => {
@@ -34,7 +38,7 @@ export function VariantCard({ variant, mark, roundHasPick, onPick, onReject, onT
   return (
     <article className="relative flex flex-col gap-3">
       <div
-        className={`flex min-h-[360px] items-center justify-center rounded-xl bg-[#f4f4f5] p-6 transition-opacity ${dimmed} ${ring}`}
+        className={`flex min-h-[360px] flex-1 items-center justify-center rounded-xl bg-[#f4f4f5] p-6 transition-opacity ${dimmed} ${ring}`}
       >
         <Render spec={variant.layout} tokens={preview ?? variant.tokens} />
       </div>
@@ -55,38 +59,40 @@ export function VariantCard({ variant, mark, roundHasPick, onPick, onReject, onT
           </p>
         )}
       </div>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onPick}
-          disabled={!open || roundHasPick}
-          className={`${BUTTON} bg-zinc-900 text-white hover:bg-zinc-700`}
-        >
-          Pick
-        </button>
-        <button
-          type="button"
-          onClick={onReject}
-          disabled={!open}
-          className={`${BUTTON} border border-zinc-300 text-zinc-700 hover:bg-zinc-50`}
-        >
-          Reject
-        </button>
-        <button
-          type="button"
-          onClick={() => (tweaking ? closeTweak() : setTweaking(true))}
-          aria-expanded={tweaking}
-          className={`${BUTTON} text-zinc-600 hover:bg-zinc-100`}
-        >
-          Tweak
-        </button>
-      </div>
-      {tweaking && (
+      {actions && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={actions.onPick}
+            disabled={!open || roundHasPick}
+            className={`${BUTTON} bg-zinc-900 text-white hover:bg-zinc-700`}
+          >
+            Pick
+          </button>
+          <button
+            type="button"
+            onClick={actions.onReject}
+            disabled={!open}
+            className={`${BUTTON} border border-zinc-300 text-zinc-700 hover:bg-zinc-50`}
+          >
+            Reject
+          </button>
+          <button
+            type="button"
+            onClick={() => (tweaking ? closeTweak() : setTweaking(true))}
+            aria-expanded={tweaking}
+            className={`${BUTTON} text-zinc-600 hover:bg-zinc-100`}
+          >
+            Tweak
+          </button>
+        </div>
+      )}
+      {actions && tweaking && (
         <TweakPopover
           base={variant.tokens}
           onPreview={setPreview}
           onApply={(patch) => {
-            onTweak(patch);
+            actions.onTweak(patch);
             closeTweak();
           }}
           onClose={closeTweak}

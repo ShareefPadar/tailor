@@ -3,6 +3,7 @@
 import { useCallback, useReducer } from "react";
 import { BriefBar } from "../components/BriefBar";
 import { ProfilePanel } from "../components/ProfilePanel";
+import { RoundHistory } from "../components/RoundHistory";
 import { RoundView } from "../components/RoundView";
 import { VariantSkeletons } from "../components/VariantGrid";
 import { hasProfile, toPayload } from "../lib/profile";
@@ -37,6 +38,7 @@ export default function Home() {
   const { profile } = state;
   const loading = state.status === "loading";
   const currentRound = state.rounds[state.rounds.length - 1];
+  const earlierRounds = state.rounds.slice(0, -1);
 
   useTasteSummary(profile.actions, hasProfile(profile), dispatch);
 
@@ -75,8 +77,8 @@ export default function Home() {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200 px-6">
-        <h1 className="text-lg font-semibold">Style Twin</h1>
-        <p className="text-sm text-zinc-500">An AI co-designer that learns your style.</p>
+        <h1 className="shrink-0 whitespace-nowrap text-lg font-semibold">Style Twin</h1>
+        <p className="truncate text-sm text-zinc-500">An AI co-designer that learns your style.</p>
       </header>
       <div className="mx-auto grid w-full max-w-[1600px] gap-8 px-6 py-6 lg:grid-cols-[1fr_340px]">
         <main className="min-w-0 space-y-8">
@@ -100,15 +102,14 @@ export default function Home() {
               </button>
             </div>
           )}
+          <RoundHistory rounds={earlierRounds} />
           {loading ? (
             <VariantSkeletons />
           ) : (
             currentRound && (
               <RoundView
                 round={currentRound}
-                onPick={mark("PICK")}
-                onReject={mark("REJECT")}
-                onTweak={tweak}
+                actions={{ onPick: mark("PICK"), onReject: mark("REJECT"), onTweak: tweak }}
               />
             )
           )}
