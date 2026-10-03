@@ -20,7 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${inter.variable} ${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white font-sans text-zinc-900">
+      <body className="min-h-full bg-canvas font-sans text-[13px] tracking-[-0.003em] text-ink">
         {children}
       </body>
     </html>

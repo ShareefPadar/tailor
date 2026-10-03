@@ -2,7 +2,8 @@ import type { Round } from "../lib/store";
 import type { Tokens } from "../lib/types";
 import { VariantCard } from "./VariantCard";
 
-const GRID = "grid grid-cols-1 gap-6 xl:grid-cols-3";
+// 3 across when the canvas is at least 700px wide (container query), otherwise 1.
+const GRID = "mx-auto grid max-w-md grid-cols-1 gap-5 @[700px]:max-w-none @[700px]:grid-cols-3";
 
 export interface RoundActions {
   onPick: (variantId: string) => void;

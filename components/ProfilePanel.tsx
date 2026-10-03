@@ -6,15 +6,13 @@ import { TokenRow } from "./TokenRow";
 
 interface ProfilePanelProps {
   profile: Profile;
-  busy: boolean; // a generation is in flight
   onEdit: (patch: Partial<Tokens>) => void;
   onToggleLock: (key: TokenKey) => void;
-  onReset: () => void;
 }
 
-export function ProfilePanel({ profile, busy, onEdit, onToggleLock, onReset }: ProfilePanelProps) {
+export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProps) {
   return (
-    <section aria-label="Style Profile" className="space-y-5 rounded-xl border border-zinc-200 p-5">
+    <section aria-label="Style Profile" className="space-y-5 p-4">
       <h2 className="text-base font-semibold">Style Profile</h2>
       {!hasProfile(profile) ? (
         <p className="text-[17px] leading-snug text-zinc-500">
@@ -38,18 +36,6 @@ export function ProfilePanel({ profile, busy, onEdit, onToggleLock, onReset }: P
         ))}
       </div>
       <ChangeLog log={profile.log} />
-      <div className="border-t border-zinc-200 pt-3">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            if (window.confirm("Clear everything Style Twin has learned?")) onReset();
-          }}
-          className="text-sm text-zinc-500 underline-offset-2 hover:text-zinc-900 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Reset profile
-        </button>
-      </div>
     </section>
   );
 }

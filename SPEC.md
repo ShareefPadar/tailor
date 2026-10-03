@@ -33,12 +33,18 @@ app/
   api/generate/route.ts
   api/summarize/route.ts
 components/
-  BriefBar.tsx            input, Generate button, preset chips
-  RoundView.tsx           round header + VariantGrid
+  ui.ts                   shared class strings (buttons, labels, surfaces)
+  Toolbar.tsx             app name, round title, reset
+  RoundsSidebar.tsx       list of rounds, selects the one shown
+  Canvas.tsx              empty, loading, error and round states + prompt bar
+  EmptyState.tsx          first-visit preset cards
+  BriefBar.tsx            floating prompt bar: input, send button, preset chips
+  RoundView.tsx           read-only banner + VariantGrid
   VariantGrid.tsx
-  VariantCard.tsx         preview tile, label, note, chips, actions
+  VariantCard.tsx         frame, label, note, chips, actions
   TweakPopover.tsx
-  ProfilePanel.tsx        summary, token rows, change log, reset
+  TokenControl.tsx        one editing control per token (tweak and edit)
+  ProfilePanel.tsx        summary, token rows, change log
   TokenRow.tsx
   ChangeLog.tsx
   render/Render.tsx       renders a Node tree with tokens
@@ -53,6 +59,7 @@ lib/
   generate.ts             generateVariants() core, used by route and script
   presets.ts
   store.ts                useReducer state
+  useTasteSummary.ts      debounced call to /api/summarize
 data/
   preset-cache.json       starts as {}
 scripts/
@@ -493,43 +500,53 @@ Rules:
 
 ## 12. UI
 
-### 12.1 Layout
+An editor layout, as in Figma or Stitch, in an Apple-inspired light style. Inspired only: no Apple logo, name or assets.
 
-- Header: "Style Twin" + tagline "An AI co-designer that learns your style." Left aligned, 64px tall, bottom border.
-- Body ≥ 1024px: two columns, workspace `1fr`, profile panel `340px`, panel sticky at top. Below 1024px: panel stacks under the workspace.
-- The app shell uses a neutral look (white, zinc grays, Inter, zinc-900 accents). **Profile tokens only style the variant previews, never the shell.**
+### 12.1 Design language
 
-### 12.2 Workspace
+Theme tokens live in `app/globals.css` and are used through Tailwind classes. Shared class strings live in `components/ui.ts`.
 
-- **BriefBar:** input (placeholder: "Describe a component, e.g. pricing card for a food delivery app"), Generate button, then 3 preset chips. Generate disabled while loading or when input is empty. Tapping a chip fills the input and generates.
-- **RoundView:** header `Round {n} · "{brief}"`. Earlier rounds collapsed to a single row (click to expand, read-only) — P2.
-- **VariantGrid:** 3 columns at ≥ 1280px, otherwise 1 column.
-- **VariantCard:**
-  - Preview tile: background `#f4f4f5`, rounded-xl, padding 24px, min-height 360px, content centered.
-  - Below: label (font-medium), applied note (text-sm, zinc-600), chips `Uses: 16px · #16a34a · Compact` when `enforced` is non-empty.
-  - Actions: Pick (primary), Reject (secondary), Tweak (ghost).
-  - Picked: green "Picked" badge, ring around tile. Rejected: tile at 50% opacity, "Rejected" badge. After a pick, unpicked tiles go to 70% opacity until rejected or the next round.
+- **Type:** `-apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif`. 13px UI text, 11px uppercase section labels, 17px summary.
+- **Colour (light only, monochrome):** canvas `#f5f5f7`, surfaces white, glass `white/75` with backdrop blur, hairlines `black/8`, text `#1d1d1f` (ink), secondary `#6e6e73` (ink-2). The accent is ink. Red is used only for the error state.
+- **Shape and depth:** panels 12–16px radius, controls 8–10px, pills fully round, soft two-layer shadows.
+- **Motion:** 150–200ms ease-out, CSS only, disabled under `prefers-reduced-motion`.
+- **Profile tokens only style the variant previews, never the shell.**
 
-### 12.3 TweakPopover (P1)
+### 12.2 Layout
 
-Controls: radius slider 0–24 step 2; color via 6 swatches (#111827, #2563eb, #7c3aed, #16a34a, #e11d48, #ea580c) plus native color input; density segmented control; tone select. The card preview updates live. Apply commits a tweak action with changed tokens only. Cancel reverts. Escape closes.
+- **Toolbar** (48px, glass, bottom hairline): app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
+- **Body ≥ 1024px:** three panes filling the viewport, each scrolling on its own: rounds sidebar `220px`, canvas `1fr`, inspector `320px`.
+- **Body < 1024px:** one scrolling column: rounds as a horizontal strip, canvas, inspector underneath, prompt bar sticky at the bottom.
 
-### 12.4 ProfilePanel
+### 12.3 Rounds sidebar
+
+Titled "Rounds". One row per round, oldest first: number, truncated brief, and `Picked: {label}` when the round has a pick. The current round is the last row. Clicking a row shows that round on the canvas. Earlier rounds are read-only and the canvas shows a "Back to current" control. Empty: "No rounds yet."
+
+### 12.4 Canvas
+
+- Background `#f5f5f7`.
+- **VariantGrid:** 3 columns when the canvas is at least 700px wide (container query), otherwise 1.
+- **VariantCard (a frame):** the label above the frame, with a "Picked" or "Rejected" badge. Frame: white, hairline border, 16px radius, min-height 360px, content centred. Below: the applied note, chips `Uses: 16px · #16a34a · Compact` when `enforced` is non-empty, then actions Pick (primary), Reject (secondary), Tweak (ghost). Earlier rounds show no actions.
+  - Picked: ink ring around the frame. Rejected: frame at 50% opacity. After a pick, unpicked frames go to 70% opacity until rejected or the next round.
+- **Prompt bar (BriefBar):** floats at the bottom centre of the canvas: glass, 16px radius, input (placeholder: "Describe a component, e.g. pricing card for a food delivery app") and a round send button. Disabled while loading or when the input is empty. Enter submits. Three preset chips sit above it; tapping one fills the input and generates.
+- **TweakPopover:** glass panel anchored to its frame. Controls: radius slider 0–24 step 2; color via 6 swatches (#111827, #2563eb, #7c3aed, #16a34a, #e11d48, #ea580c) plus native color input; density segmented control; tone select. The card preview updates live. Apply commits a tweak action with changed tokens only. Cancel reverts. Escape closes.
+
+### 12.5 Inspector (ProfilePanel)
 
 - Title "Style Profile".
-- Summary: larger text (17px). Empty profile: "No style learned yet. Pick a variant to start."
-- Token rows: name, value (color shows a swatch), confidence bar (0–100%) or "Learning…", lock icon button (lucide `Lock` / `LockOpen`). Clicking the value opens the same control as Tweak for that token; saving dispatches `EDIT_TOKEN` (P1).
-- Changed tokens get a 1.5 s highlight background after an update (CSS transition, no library).
-- Change log titled "What I learned": newest first, max 10 shown, each as `Radius 8px → 16px` with the reason underneath in zinc-500.
-- Footer: "Reset profile" text button → `window.confirm("Clear everything Style Twin has learned?")`.
+- Summary: 17px. Empty profile: "No style learned yet. Pick a variant to start."
+- Token rows: name, value (color shows a swatch), confidence bar (0–100%) or "Learning…", lock icon button (lucide `Lock` / `LockOpen`). Clicking the value opens the same control as Tweak for that token; saving dispatches `EDIT_TOKEN`.
+- Changed tokens get a 1.5 s highlight after an update (CSS animation, no library).
+- Change log titled "What I learned": newest first, max 10 shown, each as `Radius 8px → 16px` with the reason underneath.
+- Reset lives in the toolbar: "Reset" → `window.confirm("Clear everything Style Twin has learned?")`.
 
-### 12.5 States and copy
+### 12.6 States and copy
 
 | State | Copy / behavior |
 | --- | --- |
-| Loading | 3 skeleton tiles, "Designing 3 options…" |
+| Loading | 3 skeleton frames, "Designing 3 options…" |
 | Error | "Couldn't generate this time. Try again." + "Try again" button (re-sends `lastBrief`) |
-| First visit | No rounds; preset chips visually emphasized |
+| First visit | No rounds; the canvas shows "What are we designing?" with the three presets as large cards |
 
 ## 13. Quality bar
 

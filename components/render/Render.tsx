@@ -90,7 +90,7 @@ interface RenderProps {
 export function Render({ spec, tokens }: RenderProps) {
   return (
     <div
-      className="flex w-full justify-center font-[family-name:var(--st-font)] text-[length:var(--st-size)] text-zinc-900"
+      className="flex w-full justify-center font-[family-name:var(--st-font)] text-[length:var(--st-size)] leading-normal tracking-normal text-zinc-900"
       style={tokensToStyle(tokens)}
     >
       <NodeView node={spec} shadow={tokens.shadow} nested={false} />

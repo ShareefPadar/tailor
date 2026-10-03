@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useReducer } from "react";
+import { useCallback, useReducer, useState } from "react";
 import { BriefBar } from "../components/BriefBar";
+import { Canvas } from "../components/Canvas";
+import { EmptyState } from "../components/EmptyState";
 import { ProfilePanel } from "../components/ProfilePanel";
-import { RoundHistory } from "../components/RoundHistory";
+import { RoundsSidebar } from "../components/RoundsSidebar";
 import { RoundView } from "../components/RoundView";
+import { Toolbar } from "../components/Toolbar";
 import { VariantSkeletons } from "../components/VariantGrid";
 import { hasProfile, toPayload } from "../lib/profile";
 import { createInitialState, reducer } from "../lib/store";
@@ -35,29 +38,35 @@ function stamp() {
 
 export default function Home() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
+  const [brief, setBrief] = useState("");
+  // Which round the canvas shows. null means the current (last) round. View state only.
+  const [shownRoundId, setShownRoundId] = useState<string | null>(null);
+
   const { profile } = state;
   const loading = state.status === "loading";
   const currentRound = state.rounds[state.rounds.length - 1];
-  const earlierRounds = state.rounds.slice(0, -1);
+  const shownRound = state.rounds.find((r) => r.id === shownRoundId) ?? currentRound;
+  const isCurrent = shownRound === currentRound;
 
   useTasteSummary(profile.actions, hasProfile(profile), dispatch);
 
   const generate = useCallback(
-    async (brief: string) => {
+    async (text: string) => {
       if (loading) return;
-      dispatch({ type: "GENERATE_START", brief });
+      setShownRoundId(null);
+      dispatch({ type: "GENERATE_START", brief: text });
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brief, profile: toPayload(profile) }),
+          body: JSON.stringify({ brief: text, profile: toPayload(profile) }),
         });
         const data: unknown = await res.json();
         if (!res.ok || !isGenerateResponse(data)) throw new Error("generation failed");
         dispatch({
           type: "GENERATE_SUCCESS",
           roundId: crypto.randomUUID(),
-          brief,
+          brief: text,
           variants: data.variants,
           source: data.source,
         });
@@ -74,56 +83,63 @@ export default function Home() {
     dispatch({ type: "TWEAK", variantId, patch, ...stamp() });
   const edit = (tokens: Partial<Tokens>) => dispatch({ type: "EDIT_TOKEN", tokens, ...stamp() });
 
+  const title = shownRound
+    ? `Round ${shownRound.number} · “${shownRound.brief}”`
+    : "An AI co-designer that learns your style.";
+
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200 px-6">
-        <h1 className="shrink-0 whitespace-nowrap text-lg font-semibold">Style Twin</h1>
-        <p className="truncate text-sm text-zinc-500">An AI co-designer that learns your style.</p>
-      </header>
-      <div className="mx-auto grid w-full max-w-[1600px] gap-8 px-6 py-6 lg:grid-cols-[1fr_340px]">
-        <main className="min-w-0 space-y-8">
-          <BriefBar
-            loading={loading}
-            emphasizePresets={state.rounds.length === 0}
-            onGenerate={generate}
-          />
-          {state.status === "error" && (
-            <div
-              role="alert"
-              className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-            >
-              <span>Couldn&apos;t generate this time. Try again.</span>
-              <button
-                type="button"
-                onClick={() => state.lastBrief && generate(state.lastBrief)}
-                className="rounded-md border border-red-300 bg-white px-3 py-1 font-medium hover:bg-red-100"
-              >
-                Try again
-              </button>
-            </div>
-          )}
-          <RoundHistory rounds={earlierRounds} />
+    <div className="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
+      <Toolbar
+        title={title}
+        busy={loading}
+        onReset={() => {
+          setShownRoundId(null);
+          dispatch({ type: "RESET" });
+        }}
+      />
+      <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+        <RoundsSidebar rounds={state.rounds} shownId={shownRound?.id} onSelect={setShownRoundId} />
+        <Canvas
+          error={state.status === "error"}
+          onRetry={() => state.lastBrief && generate(state.lastBrief)}
+          promptBar={
+            <BriefBar
+              value={brief}
+              onChange={setBrief}
+              loading={loading}
+              showPresets={state.rounds.length > 0}
+              onGenerate={generate}
+            />
+          }
+        >
           {loading ? (
             <VariantSkeletons />
+          ) : shownRound ? (
+            <RoundView
+              round={shownRound}
+              actions={
+                isCurrent ? { onPick: mark("PICK"), onReject: mark("REJECT"), onTweak: tweak } : undefined
+              }
+              onBackToCurrent={() => setShownRoundId(null)}
+            />
           ) : (
-            currentRound && (
-              <RoundView
-                round={currentRound}
-                actions={{ onPick: mark("PICK"), onReject: mark("REJECT"), onTweak: tweak }}
-              />
-            )
+            <EmptyState
+              disabled={loading}
+              onPreset={(preset) => {
+                setBrief(preset);
+                generate(preset);
+              }}
+            />
           )}
-        </main>
-        <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto">
+        </Canvas>
+        <aside className="min-h-0 border-t border-hairline bg-white lg:overflow-y-auto lg:border-l lg:border-t-0">
           <ProfilePanel
             profile={profile}
-            busy={loading}
             onEdit={edit}
             onToggleLock={(key: TokenKey) => dispatch({ type: "TOGGLE_LOCK", key })}
-            onReset={() => dispatch({ type: "RESET" })}
           />
         </aside>
       </div>
-    </>
+    </div>
   );
 }
