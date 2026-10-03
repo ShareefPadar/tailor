@@ -131,3 +131,22 @@ export function displayValue(key: TokenKey, value: string | number): string {
   const s = String(value);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+// Typed write of one token. Works on full or partial token objects.
+export function setToken<K extends TokenKey>(target: Partial<Tokens>, key: K, value: Tokens[K]): void {
+  target[key] = value;
+}
+
+// The one token `key` from `tokens`, as a patch.
+export function pickToken(tokens: Tokens, key: TokenKey): Partial<Tokens> {
+  const patch: Partial<Tokens> = {};
+  setToken(patch, key, tokens[key]);
+  return patch;
+}
+
+// Only the tokens in `keys` whose value differs between `from` and `to`.
+export function diffTokens(from: Tokens, to: Tokens, keys: readonly TokenKey[] = TOKEN_KEYS): Partial<Tokens> {
+  const patch: Partial<Tokens> = {};
+  for (const key of keys) if (from[key] !== to[key]) setToken(patch, key, to[key]);
+  return patch;
+}

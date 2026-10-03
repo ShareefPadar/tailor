@@ -1,4 +1,5 @@
 import type { Round } from "../lib/store";
+import type { Tokens } from "../lib/types";
 import { VariantCard } from "./VariantCard";
 
 const GRID = "grid grid-cols-1 gap-6 xl:grid-cols-3";
@@ -7,9 +8,10 @@ interface VariantGridProps {
   round: Round;
   onPick: (variantId: string) => void;
   onReject: (variantId: string) => void;
+  onTweak: (variantId: string, patch: Partial<Tokens>) => void;
 }
 
-export function VariantGrid({ round, onPick, onReject }: VariantGridProps) {
+export function VariantGrid({ round, onPick, onReject, onTweak }: VariantGridProps) {
   const roundHasPick = Object.values(round.marks).includes("picked");
   return (
     <div className={GRID}>
@@ -21,6 +23,7 @@ export function VariantGrid({ round, onPick, onReject }: VariantGridProps) {
           roundHasPick={roundHasPick}
           onPick={() => onPick(variant.id)}
           onReject={() => onReject(variant.id)}
+          onTweak={(patch) => onTweak(variant.id, patch)}
         />
       ))}
     </div>

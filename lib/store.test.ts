@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, reducer, type AppState, type StoreAction } from "./store";
 import { SEEDS } from "./tokens";
-import type { Variant } from "./types";
+import type { TokenKey, Tokens, Variant } from "./types";
 
 const variants: Variant[] = SEEDS.map((seed, i) => ({
   id: `v${i}`,
@@ -98,5 +98,96 @@ describe("summary", () => {
     expect(next.profile.summary).toBe("Likes round, friendly designs.");
     expect(next.profile.tokens).toBe(s.profile.tokens);
     expect(next.profile.actions).toBe(s.profile.actions);
+  });
+});
+
+const tweak = (variantId: string, patch: Partial<Tokens>): StoreAction => ({ type: "TWEAK", variantId, patch, actionId: `t${++n}`, at: n });
+const edit = (tokens: Partial<Tokens>): StoreAction => ({ type: "EDIT_TOKEN", tokens, actionId: `e${++n}`, at: n });
+const lock = (key: TokenKey): StoreAction => ({ type: "TOGGLE_LOCK", key });
+
+describe("tweak (AC6)", () => {
+  const start = () => generated(createInitialState());
+
+  it("applying a tone tweak sets the profile tone immediately", () => {
+    const s = reducer(start(), tweak("v0", { tone: "friendly" }));
+    expect(s.profile.tokens.tone).toBe("friendly");
+    expect(s.profile.log[0]).toMatchObject({ token: "tone", to: "Friendly", reason: "You tweaked it on Minimal" });
+    expect(s.profile.actions[0]).toMatchObject({ kind: "tweak", tokens: { tone: "friendly" } });
+  });
+
+  it("updates the variant shown and keeps the others", () => {
+    const s = reducer(start(), tweak("v0", { radius: 12, primary: "#e11d48" }));
+    expect(current(s).variants[0].tokens).toMatchObject({ radius: 12, primary: "#e11d48", density: "spacious" });
+    expect(current(s).variants[1].tokens).toEqual(SEEDS[1].tokens);
+  });
+
+  it("carries only the tokens that actually changed", () => {
+    const s = reducer(start(), tweak("v0", { radius: 4, tone: "premium" })); // radius 4 is unchanged
+    expect(s.profile.actions[0].tokens).toEqual({ tone: "premium" });
+  });
+
+  it("a tweak that changes nothing is ignored", () => {
+    const s = start();
+    expect(reducer(s, tweak("v0", { radius: 4 }))).toBe(s);
+    expect(reducer(s, tweak("v0", {}))).toBe(s);
+  });
+
+  it("can be applied repeatedly, including on picked and rejected variants", () => {
+    let s = reducer(start(), pick("v0"));
+    s = reducer(s, tweak("v0", { tone: "friendly" }));
+    s = reducer(s, tweak("v0", { tone: "premium" }));
+    expect(s.profile.actions.filter((a) => a.kind === "tweak")).toHaveLength(2);
+    expect(current(s).marks).toEqual({ v0: "picked" });
+  });
+
+  it("drops tweaked tokens from the variant's enforced chips", () => {
+    const enforced = reducer(
+      { ...start(), rounds: [{ ...current(start()), variants: variants.map((v) => ({ ...v, enforced: ["radius", "primary"] })) }] },
+      tweak("v0", { radius: 10 }),
+    );
+    expect(current(enforced).variants[0].enforced).toEqual(["primary"]);
+    expect(current(enforced).variants[1].enforced).toEqual(["radius", "primary"]);
+  });
+});
+
+describe("edit and lock (AC5)", () => {
+  it("an edit sets the value, locks it, and survives contradicting picks", () => {
+    let s = generated(createInitialState());
+    s = reducer(s, edit({ radius: 24 }));
+    expect(s.profile.tokens.radius).toBe(24);
+    expect(s.profile.locked.radius).toBe(true);
+    expect(s.profile.log[0]).toMatchObject({ token: "radius", reason: "You set it (locked)" });
+    s = reducer(s, pick("v0")); // Minimal has radius 4
+    expect(s.profile.tokens.radius).toBe(24);
+    s = reducer(generated(s, "two"), pick("v0"));
+    expect(s.profile.tokens.radius).toBe(24);
+  });
+
+  it("an edit works before any round exists", () => {
+    const s = reducer(createInitialState(), edit({ primary: "#e11d48" }));
+    expect(s.profile.tokens.primary).toBe("#e11d48");
+    expect(s.profile.actions[0]).toMatchObject({ kind: "edit", round: 0, variantLabel: "" });
+  });
+
+  it("TOGGLE_LOCK flips the lock without logging", () => {
+    const s = reducer(createInitialState(), lock("tone"));
+    expect(s.profile.locked.tone).toBe(true);
+    expect(s.profile.log).toEqual([]);
+    expect(s.profile.actions).toEqual([]);
+    expect(reducer(s, lock("tone")).profile.locked.tone).toBe(false);
+  });
+});
+
+describe("reset (AC7)", () => {
+  it("clears profile, log and rounds so the next round starts from seeds", () => {
+    let s = generated(createInitialState());
+    s = reducer(s, pick("v2"));
+    s = reducer(s, edit({ tone: "premium" }));
+    s = reducer({ ...s, status: "error" }, { type: "RESET" });
+    const fresh = createInitialState();
+    expect(s).toEqual(fresh);
+    expect(s.profile.log).toEqual([]);
+    expect(s.rounds).toEqual([]);
+    expect(Object.values(s.profile.locked).some(Boolean)).toBe(false);
   });
 });

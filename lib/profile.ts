@@ -1,4 +1,4 @@
-import { CATEGORY_KEYS, CATEGORY_OPTIONS, DEFAULT_TOKENS, displayValue, SEEDS, TOKEN_KEYS } from "./tokens";
+import { CATEGORY_KEYS, CATEGORY_OPTIONS, DEFAULT_TOKENS, displayValue, SEEDS, setToken, TOKEN_KEYS } from "./tokens";
 import type {
   Action,
   CategoryKey,
@@ -44,10 +44,6 @@ export function hasProfile(p: Profile): boolean {
 }
 
 // ---------- helpers ----------
-
-function setToken<K extends TokenKey>(tokens: Tokens, key: K, value: Tokens[K]): void {
-  tokens[key] = value;
-}
 
 // Read/write view of one category's scores. Shares the underlying object.
 function scoreMap(scores: Profile["scores"], key: CategoryKey): Record<string, number> {

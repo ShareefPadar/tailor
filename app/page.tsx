@@ -8,7 +8,7 @@ import { VariantSkeletons } from "../components/VariantGrid";
 import { hasProfile, toPayload } from "../lib/profile";
 import { createInitialState, reducer } from "../lib/store";
 import { useTasteSummary } from "../lib/useTasteSummary";
-import type { Variant } from "../lib/types";
+import type { TokenKey, Tokens, Variant } from "../lib/types";
 
 interface GenerateResponse {
   variants: Variant[];
@@ -25,6 +25,11 @@ function isGenerateResponse(data: unknown): data is GenerateResponse {
     "source" in data &&
     (data.source === "llm" || data.source === "cache")
   );
+}
+
+// Ids and timestamps are made at dispatch time so the reducer stays pure.
+function stamp() {
+  return { actionId: crypto.randomUUID(), at: Date.now() };
 }
 
 export default function Home() {
@@ -61,9 +66,11 @@ export default function Home() {
     [loading, profile],
   );
 
-  // Ids and timestamps are made here so the reducer stays pure.
   const mark = (type: "PICK" | "REJECT") => (variantId: string) =>
-    dispatch({ type, variantId, actionId: crypto.randomUUID(), at: Date.now() });
+    dispatch({ type, variantId, ...stamp() });
+  const tweak = (variantId: string, patch: Partial<Tokens>) =>
+    dispatch({ type: "TWEAK", variantId, patch, ...stamp() });
+  const edit = (tokens: Partial<Tokens>) => dispatch({ type: "EDIT_TOKEN", tokens, ...stamp() });
 
   return (
     <>
@@ -97,12 +104,23 @@ export default function Home() {
             <VariantSkeletons />
           ) : (
             currentRound && (
-              <RoundView round={currentRound} onPick={mark("PICK")} onReject={mark("REJECT")} />
+              <RoundView
+                round={currentRound}
+                onPick={mark("PICK")}
+                onReject={mark("REJECT")}
+                onTweak={tweak}
+              />
             )
           )}
         </main>
         <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto">
-          <ProfilePanel profile={profile} />
+          <ProfilePanel
+            profile={profile}
+            busy={loading}
+            onEdit={edit}
+            onToggleLock={(key: TokenKey) => dispatch({ type: "TOGGLE_LOCK", key })}
+            onReset={() => dispatch({ type: "RESET" })}
+          />
         </aside>
       </div>
     </>

@@ -1,5 +1,6 @@
-import { initialProfile, updateProfile } from "./profile";
-import type { Profile, Variant } from "./types";
+import { initialProfile, toggleLock, updateProfile } from "./profile";
+import { diffTokens } from "./tokens";
+import type { Profile, TokenKey, Tokens, Variant } from "./types";
 
 export type Mark = "picked" | "rejected";
 
@@ -19,7 +20,6 @@ export interface AppState {
   lastBrief: string | null; // for "Try again"
 }
 
-// Tweak, edit, lock and reset come in Phase 6.
 // Ids and timestamps are created by the dispatcher so the reducer stays pure.
 export type StoreAction =
   | { type: "GENERATE_START"; brief: string }
@@ -33,7 +33,11 @@ export type StoreAction =
   | { type: "GENERATE_ERROR" }
   | { type: "PICK"; variantId: string; actionId: string; at: number }
   | { type: "REJECT"; variantId: string; actionId: string; at: number }
-  | { type: "SET_SUMMARY"; summary: string };
+  | { type: "TWEAK"; variantId: string; patch: Partial<Tokens>; actionId: string; at: number }
+  | { type: "EDIT_TOKEN"; tokens: Partial<Tokens>; actionId: string; at: number }
+  | { type: "TOGGLE_LOCK"; key: TokenKey }
+  | { type: "SET_SUMMARY"; summary: string }
+  | { type: "RESET" };
 
 export function createInitialState(): AppState {
   return { rounds: [], profile: initialProfile(), status: "idle", lastBrief: null };
@@ -67,6 +71,43 @@ function markVariant(
   return { ...state, rounds: [...state.rounds.slice(0, -1), marked], profile };
 }
 
+// A tweak changes the variant shown (so the card keeps what the designer made) and teaches the
+// profile. Tweaked tokens stop being "enforced", so the variant's chips don't claim stale values.
+function tweakVariant(
+  state: AppState,
+  variantId: string,
+  patch: Partial<Tokens>,
+  actionId: string,
+  at: number,
+): AppState {
+  const round = state.rounds[state.rounds.length - 1];
+  const variant = round?.variants.find((v) => v.id === variantId);
+  if (!round || !variant) return state;
+
+  const changed = diffTokens(variant.tokens, { ...variant.tokens, ...patch });
+  const changedKeys = Object.keys(changed);
+  if (changedKeys.length === 0) return state;
+
+  const tweaked: Variant = {
+    ...variant,
+    tokens: { ...variant.tokens, ...changed },
+    enforced: variant.enforced.filter((key) => !changedKeys.includes(key)),
+  };
+  const nextRound: Round = {
+    ...round,
+    variants: round.variants.map((v) => (v.id === variantId ? tweaked : v)),
+  };
+  const profile = updateProfile(state.profile, {
+    id: actionId,
+    kind: "tweak",
+    round: round.number,
+    variantLabel: variant.label,
+    tokens: changed, // changed tokens only
+    at,
+  });
+  return { ...state, rounds: [...state.rounds.slice(0, -1), nextRound], profile };
+}
+
 export function reducer(state: AppState, action: StoreAction): AppState {
   switch (action.type) {
     case "GENERATE_START":
@@ -94,7 +135,25 @@ export function reducer(state: AppState, action: StoreAction): AppState {
       return markVariant(state, "pick", action.variantId, action.actionId, action.at);
     case "REJECT":
       return markVariant(state, "reject", action.variantId, action.actionId, action.at);
+    case "TWEAK":
+      return tweakVariant(state, action.variantId, action.patch, action.actionId, action.at);
+    case "EDIT_TOKEN":
+      return {
+        ...state,
+        profile: updateProfile(state.profile, {
+          id: action.actionId,
+          kind: "edit",
+          round: state.rounds.length,
+          variantLabel: "",
+          tokens: action.tokens, // changed token only; editing locks it
+          at: action.at,
+        }),
+      };
+    case "TOGGLE_LOCK":
+      return { ...state, profile: toggleLock(state.profile, action.key) };
     case "SET_SUMMARY":
       return { ...state, profile: { ...state.profile, summary: action.summary } };
+    case "RESET":
+      return createInitialState();
   }
 }

@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { displayValue } from "../lib/tokens";
 import type { Mark } from "../lib/store";
-import type { Variant } from "../lib/types";
+import type { Tokens, Variant } from "../lib/types";
 import { Render } from "./render/Render";
+import { TweakPopover } from "./TweakPopover";
 
 interface VariantCardProps {
   variant: Variant;
@@ -9,22 +13,30 @@ interface VariantCardProps {
   roundHasPick: boolean;
   onPick: () => void;
   onReject: () => void;
+  onTweak: (patch: Partial<Tokens>) => void;
 }
 
 const BUTTON = "rounded-lg px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40";
 
-export function VariantCard({ variant, mark, roundHasPick, onPick, onReject }: VariantCardProps) {
+export function VariantCard({ variant, mark, roundHasPick, onPick, onReject, onTweak }: VariantCardProps) {
+  const [tweaking, setTweaking] = useState(false);
+  const [preview, setPreview] = useState<Tokens | null>(null); // live tweak preview
+  const closeTweak = () => {
+    setTweaking(false);
+    setPreview(null);
+  };
+
   const chips = variant.enforced.map((key) => displayValue(key, variant.tokens[key]));
   const open = mark === undefined; // a variant is marked at most once
   const dimmed = mark === "rejected" ? "opacity-50" : mark === undefined && roundHasPick ? "opacity-70" : "";
   const ring = mark === "picked" ? "ring-2 ring-green-600" : "";
 
   return (
-    <article className="flex flex-col gap-3">
+    <article className="relative flex flex-col gap-3">
       <div
         className={`flex min-h-[360px] items-center justify-center rounded-xl bg-[#f4f4f5] p-6 transition-opacity ${dimmed} ${ring}`}
       >
-        <Render spec={variant.layout} tokens={variant.tokens} />
+        <Render spec={variant.layout} tokens={preview ?? variant.tokens} />
       </div>
       <div className="space-y-1">
         <div className="flex items-center gap-2">
@@ -60,7 +72,26 @@ export function VariantCard({ variant, mark, roundHasPick, onPick, onReject }: V
         >
           Reject
         </button>
+        <button
+          type="button"
+          onClick={() => (tweaking ? closeTweak() : setTweaking(true))}
+          aria-expanded={tweaking}
+          className={`${BUTTON} text-zinc-600 hover:bg-zinc-100`}
+        >
+          Tweak
+        </button>
       </div>
+      {tweaking && (
+        <TweakPopover
+          base={variant.tokens}
+          onPreview={setPreview}
+          onApply={(patch) => {
+            onTweak(patch);
+            closeTweak();
+          }}
+          onClose={closeTweak}
+        />
+      )}
     </article>
   );
 }
