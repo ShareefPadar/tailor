@@ -1,6 +1,5 @@
 import { confidence, hasProfile } from "../lib/profile";
 import type { Profile, TokenKey, Tokens } from "../lib/types";
-import { ChangeLog } from "./ChangeLog";
 import { TokenRow } from "./TokenRow";
 import { LABEL } from "./ui";
 
@@ -48,9 +47,6 @@ export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProp
           ))}
         </div>
       ))}
-      <div className="p-4">
-        <ChangeLog log={profile.log} />
-      </div>
     </section>
   );
 }

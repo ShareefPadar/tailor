@@ -37,6 +37,8 @@ components/
   Toolbar.tsx             app name, round title, reset
   RoundsSidebar.tsx       list of rounds, selects the one shown
   Canvas.tsx              empty, loading, error and round states + prompt bar
+  ResizeHandle.tsx        drag handle between a side panel and the canvas
+  panelSizes.ts           panel width limits, literal width classes, usePanelSizes()
   EmptyState.tsx          first-visit preset cards
   BriefBar.tsx            floating prompt bar: input, send button, preset chips
   RoundView.tsx           read-only banner + VariantGrid
@@ -44,7 +46,7 @@ components/
   VariantCard.tsx         frame, label, note, chips, actions
   TweakPopover.tsx
   TokenControl.tsx        one editing control per token (tweak and edit)
-  ProfilePanel.tsx        summary, token rows, change log
+  ProfilePanel.tsx        summary and grouped token rows
   TokenRow.tsx
   ChangeLog.tsx
   render/Render.tsx       renders a Node tree with tokens
@@ -61,6 +63,7 @@ lib/
   presets.ts
   store.ts                useReducer state
   useTasteSummary.ts      debounced call to /api/summarize
+  response.ts             shape check for the /api/generate reply
 data/
   preset-cache.json       starts as {}
 scripts/
@@ -470,6 +473,8 @@ Design rules:
 - Choose the block that fits the content:
   prices and key numbers -> stat. Plan features or benefits -> list. Order, delivery or account details -> rows.
   Progress through stages (ordered, packed, on the way, delivered) -> steps. A status or highlight -> badge.
+  Use steps only for a real sequence with a current stage, such as an order, a delivery or onboarding.
+  Never use steps for features, benefits or perks: those are a list.
   Forms -> 2 to 4 inputs with helpful example placeholders, then the submit button.
 - Exactly one primary button per variant. A second action, if it is really needed, is "secondary" or "ghost". Button text is a verb phrase of 1 to 3 words.
 - Say each thing once. Do not repeat the same information in two blocks, and do not add a block just to fill space.
@@ -574,13 +579,19 @@ Theme tokens live in `app/globals.css` and are used through Tailwind classes. Sh
 ### 12.2 Layout
 
 - Every panel floats over the dotted workspace with 12px gaps and 16px corner radius.
-- **Toolbar** (48px, glass): app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
-- **Body ≥ 1024px:** three panes filling the viewport, each scrolling on its own: rounds sidebar `200px`, canvas `1fr`, inspector `300px` (`220px` and `320px` from 1536px).
-- **Body < 1024px:** one scrolling column: rounds as a horizontal strip, canvas, inspector underneath, prompt bar sticky at the bottom.
+- **Body ≥ 1024px**, filling the viewport, each panel scrolling on its own:
+  - **Left column** (default `200px`): the Rounds panel on top, sized to its content up to 45% of the height, and the "What I learned" panel below taking the rest.
+  - **Centre:** the canvas.
+  - **Right** (default `300px`): the Style Profile inspector, running the full height of the screen.
+  - **Toolbar** (48px, glass) spans the left column and the canvas only: app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
+- **Resizing:** a drag handle sits between the left column and the canvas, and between the canvas and the inspector. Left column `180–320px`, inspector `280–440px`, in 10px steps (each width is a literal Tailwind class in `components/panelSizes.ts`, since inline styles are not allowed). While dragging, the canvas never goes below 360px. The handles are focusable separators: arrow keys move one step, Home and End jump to the limits, double-click resets. As a safety net the left column is capped at `26vw` and the inspector at `34vw`.
+- **Body < 1024px:** one scrolling column in this order: toolbar (sticky), rounds as a horizontal strip, canvas, "What I learned", inspector. The prompt bar is sticky at the bottom. No resize handles.
 
-### 12.3 Rounds sidebar
+### 12.3 Left panels
 
-Titled "Rounds". One row per round, oldest first: number, truncated brief, and `Picked: {label}` when the round has a pick. The current round is the last row. Clicking a row shows that round on the canvas. Earlier rounds are read-only and the canvas shows a "Back to current" control. Empty: "No rounds yet."
+**Rounds.** Titled "Rounds". One row per round, oldest first: number, truncated brief, and `Picked: {label}` when the round has a pick. The current round is the last row. Clicking a row shows that round on the canvas. Earlier rounds are read-only and the canvas shows a "Back to current" control. Empty: "No rounds yet."
+
+**What I learned.** The change log: newest first, max 10 shown, each as `Radius 8px → 16px` with the reason underneath. Empty: "Nothing yet."
 
 ### 12.4 Canvas
 
@@ -598,7 +609,6 @@ Titled "Rounds". One row per round, oldest first: number, truncated brief, and `
 - Token rows in three groups: **Look** (Appearance, Color, Radius, Shadow, Border), **Type and spacing** (Font, Headings, Density), **Components and voice** (Buttons, Tone).
 - Each row: name, value (color shows a swatch), confidence bar (0–100%) or "Learning…", lock icon button (lucide `Lock` / `LockOpen`). Clicking the value opens the same control as Tweak for that token; saving dispatches `EDIT_TOKEN`.
 - Changed tokens get a 1.5 s highlight after an update (CSS animation, no library).
-- Change log titled "What I learned": newest first, max 10 shown, each as `Radius 8px → 16px` with the reason underneath.
 - Reset lives in the toolbar: "Reset" → `window.confirm("Clear everything Style Twin has learned?")`.
 
 ### 12.6 States and copy

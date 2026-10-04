@@ -3,33 +3,20 @@
 import { useCallback, useReducer, useState } from "react";
 import { BriefBar } from "../components/BriefBar";
 import { Canvas } from "../components/Canvas";
+import { ChangeLog } from "../components/ChangeLog";
 import { EmptyState } from "../components/EmptyState";
+import { LEFT, RIGHT, usePanelSizes } from "../components/panelSizes";
 import { ProfilePanel } from "../components/ProfilePanel";
+import { ResizeHandle } from "../components/ResizeHandle";
 import { RoundsSidebar } from "../components/RoundsSidebar";
 import { RoundView } from "../components/RoundView";
 import { Toolbar } from "../components/Toolbar";
 import { VariantSkeletons } from "../components/VariantGrid";
 import { hasProfile, toPayload } from "../lib/profile";
+import { isGenerateResponse } from "../lib/response";
 import { createInitialState, reducer } from "../lib/store";
 import { useTasteSummary } from "../lib/useTasteSummary";
-import type { TokenKey, Tokens, Variant } from "../lib/types";
-
-interface GenerateResponse {
-  variants: Variant[];
-  source: "llm" | "cache";
-}
-
-function isGenerateResponse(data: unknown): data is GenerateResponse {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "variants" in data &&
-    Array.isArray(data.variants) &&
-    data.variants.length === 3 &&
-    "source" in data &&
-    (data.source === "llm" || data.source === "cache")
-  );
-}
+import type { TokenKey, Tokens } from "../lib/types";
 
 // Ids and timestamps are made at dispatch time so the reducer stays pure.
 function stamp() {
@@ -41,6 +28,7 @@ export default function Home() {
   const [brief, setBrief] = useState("");
   // Which round the canvas shows. null means the current (last) round. View state only.
   const [shownRoundId, setShownRoundId] = useState<string | null>(null);
+  const panels = usePanelSizes();
 
   const { profile } = state;
   const loading = state.status === "loading";
@@ -88,58 +76,69 @@ export default function Home() {
     : "An AI co-designer that learns your style.";
 
   return (
-    <div className="bg-dots flex min-h-dvh flex-col gap-3 p-3 lg:h-dvh lg:overflow-hidden">
-      <Toolbar
-        title={title}
-        busy={loading}
-        onReset={() => {
-          setShownRoundId(null);
-          dispatch({ type: "RESET" });
-        }}
-      />
-      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:grid lg:grid-cols-[200px_minmax(0,1fr)_300px] 2xl:grid-cols-[220px_minmax(0,1fr)_320px]">
-        <RoundsSidebar rounds={state.rounds} shownId={shownRound?.id} onSelect={setShownRoundId} />
-        <Canvas
-          error={state.status === "error"}
-          onRetry={() => state.lastBrief && generate(state.lastBrief)}
-          promptBar={
-            <BriefBar
-              value={brief}
-              onChange={setBrief}
-              loading={loading}
-              showPresets={state.rounds.length > 0}
-              onGenerate={generate}
-            />
-          }
-        >
-          {loading ? (
-            <VariantSkeletons />
-          ) : shownRound ? (
-            <RoundView
-              round={shownRound}
-              actions={
-                isCurrent ? { onPick: mark("PICK"), onReject: mark("REJECT"), onTweak: tweak } : undefined
-              }
-              onBackToCurrent={() => setShownRoundId(null)}
-            />
-          ) : (
-            <EmptyState
-              disabled={loading}
-              onPreset={(preset) => {
-                setBrief(preset);
-                generate(preset);
-              }}
-            />
-          )}
-        </Canvas>
-        <aside className="glass min-h-0 rounded-2xl lg:overflow-y-auto">
-          <ProfilePanel
-            profile={profile}
-            onEdit={edit}
-            onToggleLock={(key: TokenKey) => dispatch({ type: "TOGGLE_LOCK", key })}
-          />
-        </aside>
+    <div className="bg-dots flex min-h-dvh flex-col gap-3 p-3 lg:h-dvh lg:flex-row lg:gap-0 lg:overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+        <Toolbar
+          title={title}
+          busy={loading}
+          onReset={() => {
+            setShownRoundId(null);
+            dispatch({ type: "RESET" });
+          }}
+        />
+        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:gap-0">
+          {/* Below 1024px this wrapper dissolves, so the learned panel can sit after the canvas. */}
+          <div className={`contents min-h-0 shrink-0 flex-col gap-3 lg:flex lg:max-w-[26vw] ${panels.leftClass}`}>
+            <RoundsSidebar rounds={state.rounds} shownId={shownRound?.id} onSelect={setShownRoundId} />
+            <aside className="glass order-3 min-h-0 rounded-2xl p-4 lg:order-none lg:flex-1 lg:overflow-y-auto">
+              <ChangeLog log={profile.log} />
+            </aside>
+          </div>
+          <ResizeHandle label="Resize left panels" side="left" value={panels.left} onChange={panels.setLeft} {...LEFT} />
+          <Canvas
+            error={state.status === "error"}
+            onRetry={() => state.lastBrief && generate(state.lastBrief)}
+            promptBar={
+              <BriefBar
+                value={brief}
+                onChange={setBrief}
+                loading={loading}
+                showPresets={state.rounds.length > 0}
+                onGenerate={generate}
+              />
+            }
+          >
+            {loading ? (
+              <VariantSkeletons />
+            ) : shownRound ? (
+              <RoundView
+                round={shownRound}
+                actions={
+                  isCurrent ? { onPick: mark("PICK"), onReject: mark("REJECT"), onTweak: tweak } : undefined
+                }
+                onBackToCurrent={() => setShownRoundId(null)}
+              />
+            ) : (
+              <EmptyState
+                disabled={loading}
+                onPreset={(preset) => {
+                  setBrief(preset);
+                  generate(preset);
+                }}
+              />
+            )}
+          </Canvas>
+        </div>
       </div>
+      <ResizeHandle label="Resize style profile" side="right" value={panels.right} onChange={panels.setRight} {...RIGHT} />
+      {/* Full height: the toolbar spans only the left panels and the canvas. */}
+      <aside className={`glass min-h-0 shrink-0 rounded-2xl lg:max-w-[34vw] lg:overflow-y-auto ${panels.rightClass}`}>
+        <ProfilePanel
+          profile={profile}
+          onEdit={edit}
+          onToggleLock={(key: TokenKey) => dispatch({ type: "TOGGLE_LOCK", key })}
+        />
+      </aside>
     </div>
   );
 }

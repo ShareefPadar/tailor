@@ -11,7 +11,7 @@ interface CanvasProps {
 // The centre pane: a scrolling canvas with the prompt bar floating over its bottom edge.
 export function Canvas({ children, error, onRetry, promptBar }: CanvasProps) {
   return (
-    <main className="relative flex min-h-0 min-w-0 flex-col">
+    <main className="relative order-2 flex min-h-0 min-w-0 flex-1 flex-col lg:order-none">
       <div className="@container min-h-0 flex-1 scroll-pb-44 px-3 pb-48 pt-3 lg:overflow-y-auto">{children}</div>
       <div className="pointer-events-none sticky bottom-0 z-20 flex justify-center px-3 pb-3 lg:absolute lg:inset-x-0">
         <div className="pointer-events-auto w-full max-w-2xl space-y-2">

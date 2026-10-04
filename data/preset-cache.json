@@ -2,7 +2,7 @@
   "Pricing card for a food delivery subscription": [
     {
       "label": "Minimal",
-      "applied": "Spacious neutral layout with outline styling",
+      "applied": "Airy layout with neutral outline button",
       "tokens": {
         "radius": 4,
         "primary": "#111827",
@@ -19,26 +19,25 @@
         "type": "card",
         "children": [
           {
-            "type": "heading",
-            "text": "Standard Delivery Plan",
-            "level": 1
+            "type": "badge",
+            "text": "Standard Plan"
           },
           {
-            "type": "text",
-            "text": "Reliable meal delivery for busy households every week.",
-            "muted": false
+            "type": "heading",
+            "text": "Weekly Feast Pass",
+            "level": 2
           },
           {
             "type": "stat",
             "value": "$29",
-            "caption": "monthly fee"
+            "caption": "billed weekly for 3 meals"
           },
           {
             "type": "list",
             "items": [
-              "Zero delivery fees on all orders",
-              "Priority support during peak hours",
-              "Flexible weekly pause options"
+              "Free priority delivery",
+              "Curated local menus",
+              "Skip or cancel anytime"
             ]
           },
           {
@@ -52,7 +51,7 @@
     },
     {
       "label": "Bold",
-      "applied": "Compact dark mode layout with strong contrast and heavy typography",
+      "applied": "Dense dark card with strong purple shadow",
       "tokens": {
         "radius": 6,
         "primary": "#7c3aed",
@@ -69,33 +68,29 @@
         "type": "card",
         "children": [
           {
-            "type": "badge",
-            "text": "VIP PASS"
-          },
-          {
             "type": "heading",
-            "text": "Gourmet Unlimited",
+            "text": "Chef's Table VIP",
             "level": 1
           },
           {
             "type": "stat",
             "value": "$89",
-            "caption": "billed monthly"
+            "caption": "per week, unlimited perks"
           },
           {
             "type": "rows",
             "items": [
               {
-                "label": "Delivery speed",
-                "value": "Instant VIP"
+                "label": "Deliveries",
+                "value": "Daily lunch & dinner"
               },
               {
-                "label": "Restaurant access",
-                "value": "Exclusive chefs"
+                "label": "Perks",
+                "value": "Michelin partner dishes"
               },
               {
-                "label": "Service fee",
-                "value": "None"
+                "label": "Support",
+                "value": "24/7 Concierge"
               }
             ]
           },
@@ -110,7 +105,7 @@
     },
     {
       "label": "Playful",
-      "applied": "Friendly light layout with soft shadows and rounded corners",
+      "applied": "Friendly green card with soft shadows",
       "tokens": {
         "radius": 20,
         "primary": "#16a34a",
@@ -127,32 +122,27 @@
         "type": "card",
         "children": [
           {
+            "type": "badge",
+            "text": "Most Popular"
+          },
+          {
             "type": "heading",
-            "text": "Hungry Hippo Pass",
-            "level": 1
+            "text": "Taco Tuesday Forever",
+            "level": 2
           },
           {
             "type": "text",
-            "text": "Snack attack? We got your back with endless yummy treats.",
+            "text": "Never cook on a weeknight again with our snack-packed box.",
             "muted": false
           },
           {
             "type": "stat",
             "value": "$15",
-            "caption": "per month"
-          },
-          {
-            "type": "steps",
-            "items": [
-              "Pick cravings",
-              "Fast drop",
-              "Happy belly"
-            ],
-            "current": 1
+            "caption": "per delivery box"
           },
           {
             "type": "button",
-            "text": "Start munching",
+            "text": "Start snacking",
             "variant": "primary"
           }
         ]
@@ -163,7 +153,7 @@
   "Sign-up form for a fitness app": [
     {
       "label": "Minimal",
-      "applied": "Airy layout with neutral copy and clean borders",
+      "applied": "Airy layout with neutral copy and ample breathing room",
       "tokens": {
         "radius": 4,
         "primary": "#111827",
@@ -186,22 +176,22 @@
           },
           {
             "type": "text",
-            "text": "Create an account to track your daily workouts.",
+            "text": "Enter your details to create your training account.",
             "muted": true
           },
           {
             "type": "input",
-            "label": "Email",
-            "placeholder": "name@example.com"
+            "label": "Full Name",
+            "placeholder": "Alex Mercer"
           },
           {
             "type": "input",
-            "label": "Password",
-            "placeholder": "At least 8 characters"
+            "label": "Email Address",
+            "placeholder": "alex@example.com"
           },
           {
             "type": "button",
-            "text": "Create account",
+            "text": "Continue",
             "variant": "primary"
           }
         ]
@@ -210,7 +200,7 @@
     },
     {
       "label": "Bold",
-      "applied": "Dense dark mode layout with strong purple accents",
+      "applied": "Dense high-contrast layout for premium fitness tracking",
       "tokens": {
         "radius": 6,
         "primary": "#7c3aed",
@@ -228,31 +218,31 @@
         "children": [
           {
             "type": "badge",
-            "text": "ELITE FITNESS"
+            "text": "PRO ATHLETE"
           },
           {
             "type": "heading",
-            "text": "Join the Inner Circle",
+            "text": "Unlock Peak Performance",
             "level": 1
           },
           {
-            "type": "stat",
-            "value": "$19",
-            "caption": "per month after trial"
-          },
-          {
             "type": "input",
-            "label": "Username",
-            "placeholder": "fit_master"
+            "label": "Athlete ID or Email",
+            "placeholder": "champion@apex.fit"
           },
           {
             "type": "input",
             "label": "Secure Password",
-            "placeholder": "••••••••••••"
+            "placeholder": "At least 8 characters"
+          },
+          {
+            "type": "stat",
+            "value": "$19",
+            "caption": "monthly pro subscription"
           },
           {
             "type": "button",
-            "text": "Unlock Access",
+            "text": "Activate Pro",
             "variant": "primary"
           }
         ]
@@ -261,7 +251,7 @@
     },
     {
       "label": "Playful",
-      "applied": "Friendly green layout with rounded cards and soft shadows",
+      "applied": "Friendly and light card with rounded corners and green accents",
       "tokens": {
         "radius": 20,
         "primary": "#16a34a",
@@ -279,30 +269,30 @@
         "children": [
           {
             "type": "heading",
-            "text": "Let's get moving!",
+            "text": "Let's Get Moving!",
             "level": 2
           },
           {
             "type": "text",
-            "text": "Sign up and crush your daily step goals.",
+            "text": "Join thousands building healthy habits every single day.",
             "muted": false
+          },
+          {
+            "type": "input",
+            "label": "What should we call you?",
+            "placeholder": "Happy Hopper"
           },
           {
             "type": "list",
             "items": [
-              "Custom workout plans",
-              "Friendly streak tracking",
-              "Earn badges daily"
+              "Daily workout reminders",
+              "Fun achievement badges",
+              "Zero pressure coaching"
             ]
           },
           {
-            "type": "input",
-            "label": "Your Nickname",
-            "placeholder": "CardioKing"
-          },
-          {
             "type": "button",
-            "text": "Let's Go",
+            "text": "Join the Fun",
             "variant": "primary"
           }
         ]
@@ -313,7 +303,7 @@
   "Order status card for a grocery delivery app": [
     {
       "label": "Minimal",
-      "applied": "Airy layout with neutral copy and ample whitespace",
+      "applied": "Spacious neutral layout with outline button and clear status steps",
       "tokens": {
         "radius": 4,
         "primary": "#111827",
@@ -330,27 +320,32 @@
         "type": "card",
         "children": [
           {
+            "type": "badge",
+            "text": "On the way"
+          },
+          {
             "type": "heading",
-            "text": "Order #4892",
+            "text": "Groceries from Whole Foods",
             "level": 2
           },
           {
             "type": "text",
-            "text": "Your organic produce is on the way.",
+            "text": "Your driver Alex is arriving in 8 minutes with 14 items.",
             "muted": false
           },
           {
             "type": "steps",
             "items": [
-              "Picked",
+              "Order placed",
               "Packed",
-              "En Route"
+              "On the way",
+              "Delivered"
             ],
             "current": 2
           },
           {
             "type": "button",
-            "text": "View Driver",
+            "text": "Track driver",
             "variant": "primary"
           }
         ]
@@ -359,7 +354,7 @@
     },
     {
       "label": "Bold",
-      "applied": "Dense and confident dark theme delivery tracker",
+      "applied": "Dense dark premium layout with strong shadow and heavy headings",
       "tokens": {
         "radius": 6,
         "primary": "#7c3aed",
@@ -377,29 +372,38 @@
         "children": [
           {
             "type": "badge",
-            "text": "Priority Delivery"
+            "text": "Delivery update"
           },
           {
             "type": "heading",
-            "text": "Arriving in 14 mins",
+            "text": "Organic Market Box #482",
             "level": 1
+          },
+          {
+            "type": "stat",
+            "value": "12 min",
+            "caption": "Estimated arrival time"
           },
           {
             "type": "rows",
             "items": [
               {
                 "label": "Courier",
-                "value": "Marcus (Tesla Model 3)"
+                "value": "Marcus V."
               },
               {
                 "label": "Items",
-                "value": "12 artisanal goods"
+                "value": "19 products"
+              },
+              {
+                "label": "Drop-off",
+                "value": "Front door"
               }
             ]
           },
           {
             "type": "button",
-            "text": "Contact Courier",
+            "text": "Contact driver",
             "variant": "primary"
           }
         ]
@@ -408,7 +412,7 @@
     },
     {
       "label": "Playful",
-      "applied": "Friendly and light layout with rounded elements",
+      "applied": "Friendly light layout with soft shadows and rounded green cards",
       "tokens": {
         "radius": 20,
         "primary": "#16a34a",
@@ -425,26 +429,30 @@
         "type": "card",
         "children": [
           {
+            "type": "badge",
+            "text": "Almost here"
+          },
+          {
             "type": "heading",
-            "text": "Groceries are zooming to you!",
-            "level": 1
+            "text": "Fresh veggies on the hop!",
+            "level": 2
           },
           {
             "type": "text",
-            "text": "Fresh veggies loaded up and heading down your street.",
+            "text": "Your crunchables are just around the corner with Sam.",
             "muted": false
           },
           {
             "type": "list",
             "items": [
-              "Avocados picked ripe",
-              "Sourdough still warm",
-              "Oat milk secured"
+              "Organic crisp apples",
+              "Almond milk barista",
+              "Sourdough loaf"
             ]
           },
           {
             "type": "button",
-            "text": "Track on Map",
+            "text": "Say hello to Sam",
             "variant": "primary"
           }
         ]

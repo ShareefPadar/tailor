@@ -35,6 +35,8 @@ Design rules:
 - Choose the block that fits the content:
   prices and key numbers -> stat. Plan features or benefits -> list. Order, delivery or account details -> rows.
   Progress through stages (ordered, packed, on the way, delivered) -> steps. A status or highlight -> badge.
+  Use steps only for a real sequence with a current stage, such as an order, a delivery or onboarding.
+  Never use steps for features, benefits or perks: those are a list.
   Forms -> 2 to 4 inputs with helpful example placeholders, then the submit button.
 - Exactly one primary button per variant. A second action, if it is really needed, is "secondary" or "ghost". Button text is a verb phrase of 1 to 3 words.
 - Say each thing once. Do not repeat the same information in two blocks, and do not add a block just to fill space.
