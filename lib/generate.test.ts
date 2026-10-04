@@ -8,6 +8,7 @@ vi.mock("./llm", () => {
 
 import { generateVariants, GenerationError, summarize } from "./generate";
 import { generateJSON, LlmParseError } from "./llm";
+import { SEEDS } from "./tokens";
 
 const mock = vi.mocked(generateJSON);
 
@@ -21,9 +22,12 @@ const good = {
 };
 
 const payload = {
-  tokens: { radius: 16, primary: "#16a34a", density: "compact" as const, shadow: "soft" as const, font: "DM Sans" as const, tone: "friendly" as const },
+  tokens: { ...SEEDS[2].tokens, radius: 16, density: "compact" as const, tone: "friendly" as const },
   enforced: ["radius" as const],
-  confidence: { radius: 1, primary: null, density: null, shadow: null, font: null, tone: null },
+  confidence: {
+    radius: 1, primary: null, density: null, shadow: null, font: null, tone: null,
+    mode: null, buttonStyle: null, border: null, headingWeight: null,
+  },
   summary: null,
 };
 

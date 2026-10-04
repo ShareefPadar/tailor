@@ -24,12 +24,19 @@ const RADIUS_WINDOW = 4;
 export function initialProfile(): Profile {
   return {
     tokens: { ...DEFAULT_TOKENS },
-    locked: { radius: false, primary: false, density: false, shadow: false, font: false, tone: false },
+    locked: {
+      radius: false, primary: false, density: false, shadow: false, font: false, tone: false,
+      mode: false, buttonStyle: false, border: false, headingWeight: false,
+    },
     scores: {
       density: { compact: 0, comfortable: 0, spacious: 0 },
       shadow: { none: 0, soft: 0, strong: 0 },
       font: { Inter: 0, "DM Sans": 0, "Space Grotesk": 0 },
       tone: { neutral: 0, friendly: 0, playful: 0, premium: 0 },
+      mode: { light: 0, dark: 0 },
+      buttonStyle: { filled: 0, outline: 0, soft: 0 },
+      border: { none: 0, hairline: 0, bold: 0 },
+      headingWeight: { regular: 0, bold: 0, heavy: 0 },
     },
     radiusSamples: [],
     actions: [],
@@ -183,6 +190,10 @@ export function updateProfile(profile: Profile, action: Action): Profile {
       shadow: { ...profile.scores.shadow },
       font: { ...profile.scores.font },
       tone: { ...profile.scores.tone },
+      mode: { ...profile.scores.mode },
+      buttonStyle: { ...profile.scores.buttonStyle },
+      border: { ...profile.scores.border },
+      headingWeight: { ...profile.scores.headingWeight },
     },
     samples: profile.radiusSamples.map((s) => ({ ...s })),
     reasons: {},
@@ -288,6 +299,10 @@ export function toPayload(profile: Profile): ProfilePayload | null {
       shadow: confidence(profile, "shadow"),
       font: confidence(profile, "font"),
       tone: confidence(profile, "tone"),
+      mode: confidence(profile, "mode"),
+      buttonStyle: confidence(profile, "buttonStyle"),
+      border: confidence(profile, "border"),
+      headingWeight: confidence(profile, "headingWeight"),
     },
     summary: profile.summary,
   };

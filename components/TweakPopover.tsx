@@ -6,7 +6,7 @@ import type { TokenKey, Tokens } from "../lib/types";
 import { TokenControl } from "./TokenControl";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, GLASS } from "./ui";
 
-const TWEAKABLE: readonly TokenKey[] = ["radius", "primary", "density", "tone"];
+const TWEAKABLE: readonly TokenKey[] = ["mode", "radius", "primary", "density", "tone"];
 
 interface TweakPopoverProps {
   base: Tokens;

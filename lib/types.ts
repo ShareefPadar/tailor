@@ -2,6 +2,10 @@ export type Density = "compact" | "comfortable" | "spacious";
 export type Shadow = "none" | "soft" | "strong";
 export type FontName = "Inter" | "DM Sans" | "Space Grotesk";
 export type Tone = "neutral" | "friendly" | "playful" | "premium";
+export type Mode = "light" | "dark";
+export type ButtonStyle = "filled" | "outline" | "soft";
+export type BorderStyle = "none" | "hairline" | "bold";
+export type HeadingWeight = "regular" | "bold" | "heavy";
 
 export interface Tokens {
   radius: number; // 0–24, even integers
@@ -10,9 +14,14 @@ export interface Tokens {
   shadow: Shadow;
   font: FontName;
   tone: Tone;
+  mode: Mode; // light or dark card
+  buttonStyle: ButtonStyle; // how primary buttons are drawn
+  border: BorderStyle; // card and input borders
+  headingWeight: HeadingWeight;
 }
 export type TokenKey = keyof Tokens;
-export type CategoryKey = "density" | "shadow" | "font" | "tone";
+// Every token except radius and primary is a category: a fixed set of options with scores.
+export type CategoryKey = Exclude<TokenKey, "radius" | "primary">;
 
 export type Node =
   | { type: "card"; children: Node[] }
@@ -20,7 +29,12 @@ export type Node =
   | { type: "text"; text: string; muted?: boolean }
   | { type: "button"; text: string; variant?: "primary" | "secondary" | "ghost" }
   | { type: "input"; label: string; placeholder?: string }
-  | { type: "list"; items: string[] };
+  | { type: "list"; items: string[] }
+  | { type: "badge"; text: string } // small highlight, e.g. "Most popular"
+  | { type: "stat"; value: string; caption?: string } // a price or key number
+  | { type: "rows"; items: { label: string; value: string }[] } // label-value details
+  | { type: "steps"; items: string[]; current: number } // progress; current is a 0-based index
+  | { type: "divider" };
 
 export interface Variant {
   id: string;
@@ -54,12 +68,7 @@ export interface ChangeLogEntry {
 export interface Profile {
   tokens: Tokens;
   locked: Record<TokenKey, boolean>;
-  scores: {
-    density: Record<Density, number>;
-    shadow: Record<Shadow, number>;
-    font: Record<FontName, number>;
-    tone: Record<Tone, number>;
-  };
+  scores: { [K in CategoryKey]: Record<Tokens[K], number> };
   radiusSamples: { value: number; weight: number }[];
   actions: Action[];
   summary: string | null;

@@ -34,6 +34,7 @@ describe("initial profile", () => {
     const p = initialProfile();
     expect(p.tokens).toEqual({
       radius: 8, primary: "#2563eb", density: "comfortable", shadow: "soft", font: "Inter", tone: "neutral",
+      mode: "light", buttonStyle: "filled", border: "none", headingWeight: "bold",
     });
     expect(Object.values(p.locked).every((l) => !l)).toBe(true);
     expect(p.radiusSamples).toEqual([]);
@@ -114,7 +115,17 @@ describe("worked example (SPEC 8.7)", () => {
     expect(confidence(p, "shadow")).toBe(1);
     expect(confidence(p, "font")).toBe(1);
     expect(confidence(p, "tone")).toBe(0.5);
-    expect(enforcedKeys(p)).toEqual(["radius", "primary", "density", "shadow", "font"]);
+    // The four newer tokens: Playful and the round-2 pick agree on all of them.
+    // Button style: filled 1 (pick) - 0.5 (Bold was filled too, and rejected) + 1 (pick) = 1.5, the only positive score.
+    expect(p.scores.buttonStyle.filled).toBe(1.5);
+    expect(p.scores.mode).toMatchObject({ light: 2, dark: -0.5 });
+    expect(confidence(p, "mode")).toBe(1);
+    expect(confidence(p, "buttonStyle")).toBe(1);
+    expect(confidence(p, "border")).toBe(1);
+    expect(confidence(p, "headingWeight")).toBe(1);
+    expect(enforcedKeys(p)).toEqual([
+      "radius", "primary", "density", "shadow", "font", "mode", "buttonStyle", "border", "headingWeight",
+    ]);
     expect(enforcedKeys(p)).not.toContain("tone");
   });
 
@@ -129,7 +140,9 @@ describe("worked example (SPEC 8.7)", () => {
     expect(signals(p, "tone")).toBe(3);
     expect(confidence(p, "tone")).toBe(0.75);
     expect(enforcedKeys(p)).toContain("tone");
-    expect(toPayload(p)?.enforced).toEqual(["radius", "primary", "density", "shadow", "font", "tone"]);
+    expect(toPayload(p)?.enforced).toEqual([
+      "radius", "primary", "density", "shadow", "font", "tone", "mode", "buttonStyle", "border", "headingWeight",
+    ]);
   });
 });
 
@@ -187,6 +200,48 @@ describe("change log reasons", () => {
     const p = run(act("pick", PLAYFUL, "A"), act("pick", { ...PLAYFUL, primary: "#16A34A" }, "B"));
     expect(p.tokens.primary).toBe("#16a34a");
     expect(logOf(p, "primary")).toHaveLength(1);
+  });
+});
+
+describe("appearance, buttons, border and headings", () => {
+  it("picking the dark Bold seed learns all four and logs them with display names", () => {
+    const p = run(act("pick", BOLD, "Bold"));
+    expect(p.tokens).toMatchObject({ mode: "dark", buttonStyle: "filled", border: "bold", headingWeight: "heavy" });
+    expect(logOf(p, "mode")[0]).toMatchObject({ from: "Light", to: "Dark", reason: "From the Bold variant you picked" });
+    expect(logOf(p, "border")[0]).toMatchObject({ from: "None", to: "Bold" });
+    expect(logOf(p, "headingWeight")[0]).toMatchObject({ from: "Bold", to: "Heavy" });
+    expect(logOf(p, "buttonStyle")).toHaveLength(0); // filled was already the value
+  });
+
+  it("two dark picks make dark mode confident and enforced", () => {
+    const p = run(act("pick", BOLD, "A"), act("pick", BOLD, "B"));
+    expect(confidence(p, "mode")).toBe(1);
+    expect(enforcedKeys(p)).toContain("mode");
+    expect(toPayload(p)?.tokens.mode).toBe("dark");
+  });
+
+  it("a light pick against a dark profile ties, so dark stays", () => {
+    const p = run(act("pick", BOLD, "A"), act("pick", PLAYFUL, "B"));
+    expect(p.scores.mode).toEqual({ light: 1, dark: 1 });
+    expect(p.tokens.mode).toBe("dark");
+    expect(confidence(p, "mode")).toBe(0.5);
+    expect(enforcedKeys(p)).not.toContain("mode");
+  });
+
+  it("editing appearance locks it, and it survives contradicting picks", () => {
+    let p = run(act("edit", { mode: "dark" }));
+    expect(p.locked.mode).toBe(true);
+    expect(p.log[0]).toMatchObject({ token: "mode", to: "Dark", reason: "You set it (locked)" });
+    p = [act("pick", PLAYFUL, "A"), act("pick", PLAYFUL, "B")].reduce(updateProfile, p);
+    expect(p.tokens.mode).toBe("dark");
+    expect(enforcedKeys(p)).toContain("mode");
+  });
+
+  it("tweaking button style sets it directly with weight 2", () => {
+    const p = run(act("pick", PLAYFUL, "A"), act("tweak", { buttonStyle: "soft" }, "A"));
+    expect(p.tokens.buttonStyle).toBe("soft");
+    expect(p.scores.buttonStyle).toMatchObject({ filled: 1, soft: 2 });
+    expect(confidence(p, "buttonStyle")).toBeCloseTo(2 / 3);
   });
 });
 

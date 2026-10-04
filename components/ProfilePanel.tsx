@@ -1,5 +1,4 @@
 import { confidence, hasProfile } from "../lib/profile";
-import { TOKEN_KEYS } from "../lib/tokens";
 import type { Profile, TokenKey, Tokens } from "../lib/types";
 import { ChangeLog } from "./ChangeLog";
 import { TokenRow } from "./TokenRow";
@@ -10,6 +9,13 @@ interface ProfilePanelProps {
   onEdit: (patch: Partial<Tokens>) => void;
   onToggleLock: (key: TokenKey) => void;
 }
+
+// Token rows grouped the way a designer thinks about them.
+const GROUPS: { title: string; keys: TokenKey[] }[] = [
+  { title: "Look", keys: ["mode", "primary", "radius", "shadow", "border"] },
+  { title: "Type and spacing", keys: ["font", "headingWeight", "density"] },
+  { title: "Components and voice", keys: ["buttonStyle", "tone"] },
+];
 
 // The inspector: what Style Twin has learned, and the controls to correct it.
 export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProps) {
@@ -25,21 +31,23 @@ export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProp
           profile.summary && <p className="animate-rise text-[17px] leading-snug tracking-[-0.01em]">{profile.summary}</p>
         )}
       </div>
-      <div className="px-2 py-3">
-        <h3 className={`${LABEL} px-2 pb-1`}>Tokens</h3>
-        {TOKEN_KEYS.map((key) => (
-          <TokenRow
-            key={key}
-            tokenKey={key}
-            tokens={profile.tokens}
-            confidence={confidence(profile, key)}
-            locked={profile.locked[key]}
-            lastChangeId={profile.log.find((entry) => entry.token === key)?.id}
-            onEdit={onEdit}
-            onToggleLock={() => onToggleLock(key)}
-          />
-        ))}
-      </div>
+      {GROUPS.map((group) => (
+        <div key={group.title} className="px-2 py-3">
+          <h3 className={`${LABEL} px-2 pb-1`}>{group.title}</h3>
+          {group.keys.map((key) => (
+            <TokenRow
+              key={key}
+              tokenKey={key}
+              tokens={profile.tokens}
+              confidence={confidence(profile, key)}
+              locked={profile.locked[key]}
+              lastChangeId={profile.log.find((entry) => entry.token === key)?.id}
+              onEdit={onEdit}
+              onToggleLock={() => onToggleLock(key)}
+            />
+          ))}
+        </div>
+      ))}
       <div className="p-4">
         <ChangeLog log={profile.log} />
       </div>

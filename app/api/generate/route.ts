@@ -2,6 +2,7 @@ import { z } from "zod";
 import presetCache from "../../../data/preset-cache.json";
 import { GenerationError, generateVariants } from "../../../lib/generate";
 import { MissingConfigError } from "../../../lib/llm";
+import { applyEnforcement } from "../../../lib/profile";
 import { profilePayloadSchema, validateVariants } from "../../../lib/schema";
 
 export const maxDuration = 45;
@@ -30,7 +31,8 @@ export async function POST(req: Request) {
   // Cached first-round results for presets, with fresh ids. Falls through if the entry is bad.
   if (profile === null && Object.hasOwn(cache, brief)) {
     const cached = validateVariants({ variants: cache[brief] });
-    if (cached.ok) return Response.json({ variants: cached.variants, source: "cache" });
+    // Seeds are re-applied, so cached layouts always carry the current seed tokens.
+    if (cached.ok) return Response.json({ variants: applyEnforcement(cached.variants, null), source: "cache" });
   }
 
   try {

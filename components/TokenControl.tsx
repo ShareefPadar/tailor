@@ -1,5 +1,5 @@
-import { DENSITIES, displayValue, FONTS, SHADOWS, TONES, TOKEN_NAMES } from "../lib/tokens";
-import type { TokenKey, Tokens } from "../lib/types";
+import { CATEGORY_OPTIONS, displayValue, FONTS, setToken, TONES, TOKEN_NAMES } from "../lib/tokens";
+import type { CategoryKey, TokenKey, Tokens } from "../lib/types";
 
 // Literal class names so Tailwind can see them. Dynamic hex never goes in a style attribute.
 const SWATCHES = [
@@ -36,6 +36,32 @@ function Segmented<T extends string>({ tokenKey, options, value, onChange }: Seg
           {displayValue(tokenKey, option)}
         </button>
       ))}
+    </div>
+  );
+}
+
+interface CategoryControlProps<K extends CategoryKey> {
+  tokenKey: K;
+  tokens: Tokens;
+  onChange: (patch: Partial<Tokens>) => void;
+}
+
+// A token that is a short list of options. Generic so the option written always belongs to its key.
+function CategoryControl<K extends CategoryKey>({ tokenKey, tokens, onChange }: CategoryControlProps<K>) {
+  const options: readonly Tokens[K][] = CATEGORY_OPTIONS[tokenKey];
+  return (
+    <div className="space-y-1.5">
+      <span className={LABEL}>{TOKEN_NAMES[tokenKey]}</span>
+      <Segmented
+        tokenKey={tokenKey}
+        options={options}
+        value={tokens[tokenKey]}
+        onChange={(option) => {
+          const patch: Partial<Tokens> = {};
+          setToken(patch, tokenKey, option);
+          onChange(patch);
+        }}
+      />
     </div>
   );
 }
@@ -87,20 +113,6 @@ export function TokenControl({ tokenKey, tokens, onChange }: TokenControlProps) 
           </div>
         </div>
       );
-    case "density":
-      return (
-        <div className="space-y-1.5">
-          <span className={LABEL}>{title}</span>
-          <Segmented tokenKey="density" options={DENSITIES} value={tokens.density} onChange={(density) => onChange({ density })} />
-        </div>
-      );
-    case "shadow":
-      return (
-        <div className="space-y-1.5">
-          <span className={LABEL}>{title}</span>
-          <Segmented tokenKey="shadow" options={SHADOWS} value={tokens.shadow} onChange={(shadow) => onChange({ shadow })} />
-        </div>
-      );
     case "font":
       return (
         <label className="block space-y-1.5">
@@ -125,5 +137,8 @@ export function TokenControl({ tokenKey, tokens, onChange }: TokenControlProps) 
           </select>
         </label>
       );
+    // Every other token is a short list of options: density, shadow, appearance, buttons, border, headings.
+    default:
+      return <CategoryControl tokenKey={tokenKey} tokens={tokens} onChange={onChange} />;
   }
 }
