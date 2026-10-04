@@ -10,8 +10,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Style Twin",
-  description: "An AI co-designer that learns your style.",
+  title: "Tailor",
+  description: "UI tailored to your taste. An AI co-designer that learns your style.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

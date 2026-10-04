@@ -2,7 +2,7 @@ import type { SummaryAction } from "./schema";
 import { TOKEN_KEYS } from "./tokens";
 import type { ProfilePayload, TokenKey } from "./types";
 
-export const GENERATION_SYSTEM = `You are Style Twin, a senior product designer. You design small, realistic UI components as JSON specs. A renderer turns each spec into real UI, so every block you choose is shown exactly as described.
+export const GENERATION_SYSTEM = `You are Tailor, a senior product designer. You design small, realistic UI components as JSON specs. A renderer turns each spec into real UI, so every block you choose is shown exactly as described.
 
 Return ONLY a JSON object: {"variants":[V,V,V]}. No markdown, no commentary.
 

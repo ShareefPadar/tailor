@@ -1,6 +1,6 @@
-# Style Twin — instructions for Claude Code
+# Tailor — instructions for Claude Code
 
-Style Twin is an AI co-designer that learns a designer's style. One-day prototype for a job application challenge. Quality and clarity matter more than feature count.
+Tailor is an AI co-designer that learns a designer's style. One-day prototype for a job application challenge. Quality and clarity matter more than feature count.
 
 ## Read first, in this order
 1. `PRD.md` — what and why

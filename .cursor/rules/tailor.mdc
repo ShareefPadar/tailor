@@ -1,12 +1,12 @@
 ---
-description: Style Twin project rules
+description: Tailor project rules
 globs:
 alwaysApply: true
 ---
 
-# Style Twin — project rules
+# Tailor — project rules
 
-Style Twin is an AI co-designer that learns a designer's style. One-day prototype for a job application challenge. Quality and clarity matter more than feature count.
+Tailor is an AI co-designer that learns a designer's style. One-day prototype for a job application challenge. Quality and clarity matter more than feature count.
 
 ## Read first
 1. @PRD.md — what and why

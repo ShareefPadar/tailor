@@ -1,4 +1,4 @@
-# Style Twin — Build Tasks
+# Tailor — Build Tasks
 
 Build **one phase at a time**. At the end of each phase:
 
@@ -108,7 +108,7 @@ Then repeat with a sample `ProfilePayload` where `enforced` is `["radius","prima
 ## README template
 
 ```markdown
-# Style Twin
+# Tailor
 
 An AI co-designer that learns your style. Live: <vercel-url>
 

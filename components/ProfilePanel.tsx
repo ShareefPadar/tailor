@@ -16,7 +16,7 @@ const GROUPS: { title: string; keys: TokenKey[] }[] = [
   { title: "Components and voice", keys: ["buttonStyle", "tone"] },
 ];
 
-// The inspector: what Style Twin has learned, and the controls to correct it.
+// The inspector: what Tailor has learned, and the controls to correct it.
 export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProps) {
   return (
     <section aria-label="Style Profile" className="divide-y divide-hairline">

@@ -73,7 +73,7 @@ export default function Home() {
 
   const title = shownRound
     ? `Round ${shownRound.number} · “${shownRound.brief}”`
-    : "An AI co-designer that learns your style.";
+    : "UI tailored to your taste.";
 
   return (
     <div className="bg-dots flex min-h-dvh flex-col gap-3 p-3 lg:h-dvh lg:flex-row lg:gap-0 lg:overflow-hidden">

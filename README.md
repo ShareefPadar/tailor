@@ -1,6 +1,6 @@
-# Style Twin
+# Tailor
 
-An AI co-designer that learns your style. Live: <vercel-url>
+UI tailored to your taste: an AI co-designer that learns your style. Live: <vercel-url>
 
 ## What it does
 Give it a brief, get three UI variants. Pick, reject, or tweak, and it builds a visible

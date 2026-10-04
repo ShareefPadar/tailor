@@ -1,4 +1,4 @@
-# Style Twin — PRD
+# Tailor — PRD
 
 An AI co-designer that learns a designer's taste and applies it to every new UI it generates.
 
@@ -8,7 +8,7 @@ Read this file for **what** and **why**. Read `SPEC.md` for **how**. Follow `TAS
 
 ## 1. Overview
 
-The designer writes a short brief ("pricing card for a food delivery app"). Style Twin returns three UI variants rendered as real components. Every pick, reject, or tweak updates a visible **Style Profile**. The next brief comes back in the learned style, with a note on what was applied.
+The designer writes a short brief ("pricing card for a food delivery app"). Tailor returns three UI variants rendered as real components. Every pick, reject, or tweak updates a visible **Style Profile**. The next brief comes back in the learned style, with a note on what was applied.
 
 This is a one-day prototype for the optional "Generative Design Studio" challenge in a job application. It must prove one thing clearly: **the AI adapts to the designer, and the designer can see and correct what it learned.**
 
@@ -126,4 +126,4 @@ AI design tools give every designer the same generic output, so designers spend 
 
 **100-word summary**
 
-> Style Twin is an AI co-designer that learns how you design. You give it a brief, it proposes three UI variants, and every pick, rejection, or tweak updates a visible Style Profile covering radius, color, density, and copy tone. Each new generation applies that profile and explains its choices, so the designer can see and correct what the AI has learned. I built it with React, Tailwind, and an LLM returning structured JSON specs rendered as real components. My approach: AI should adapt to the designer, not the other way around, and its understanding should be transparent and editable.
+> Tailor is an AI co-designer that learns how you design. You give it a brief, it proposes three UI variants, and every pick, rejection, or tweak updates a visible Style Profile covering radius, color, density, and copy tone. Each new generation applies that profile and explains its choices, so the designer can see and correct what the AI has learned. I built it with React, Tailwind, and an LLM returning structured JSON specs rendered as real components. My approach: AI should adapt to the designer, not the other way around, and its understanding should be transparent and editable.

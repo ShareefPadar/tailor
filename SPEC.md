@@ -1,4 +1,4 @@
-# Style Twin — Technical Spec
+# Tailor — Technical Spec
 
 Implementation details for `PRD.md`. If something here is ambiguous, ask before inventing.
 
@@ -440,7 +440,7 @@ Client calls it **1.5 s after the last action** (debounced), only if `hasProfile
 ### 10.1 Generation system prompt
 
 ```text
-You are Style Twin, a senior product designer. You design small, realistic UI components as JSON specs. A renderer turns each spec into real UI, so every block you choose is shown exactly as described.
+You are Tailor, a senior product designer. You design small, realistic UI components as JSON specs. A renderer turns each spec into real UI, so every block you choose is shown exactly as described.
 
 Return ONLY a JSON object: {"variants":[V,V,V]}. No markdown, no commentary.
 
@@ -583,7 +583,7 @@ Theme tokens live in `app/globals.css` and are used through Tailwind classes. Sh
   - **Left column** (default `200px`): the Rounds panel on top, sized to its content up to 45% of the height, and the "What I learned" panel below taking the rest.
   - **Centre:** the canvas.
   - **Right** (default `300px`): the Style Profile inspector, running the full height of the screen.
-  - **Toolbar** (48px, glass) spans the left column and the canvas only: app mark and "Style Twin" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "An AI co-designer that learns your style." when there are no rounds); "Reset" on the right.
+  - **Toolbar** (48px, glass) spans the left column and the canvas only: app mark (lucide `Scissors`) and "Tailor" on the left; the shown round's title `Round {n} · "{brief}"` centred (the tagline "UI tailored to your taste." when there are no rounds); "Reset" on the right.
 - **Resizing:** a drag handle sits between the left column and the canvas, and between the canvas and the inspector. Left column `180–320px`, inspector `280–440px`, in 10px steps (each width is a literal Tailwind class in `components/panelSizes.ts`, since inline styles are not allowed). While dragging, the canvas never goes below 360px. The handles are focusable separators: arrow keys move one step, Home and End jump to the limits, double-click resets. As a safety net the left column is capped at `26vw` and the inspector at `34vw`.
 - **Body < 1024px:** one scrolling column in this order: toolbar (sticky), rounds as a horizontal strip, canvas, "What I learned", inspector. The prompt bar is sticky at the bottom. No resize handles.
 
@@ -609,13 +609,13 @@ Theme tokens live in `app/globals.css` and are used through Tailwind classes. Sh
 - Token rows in three groups: **Look** (Appearance, Color, Radius, Shadow, Border), **Type and spacing** (Font, Headings, Density), **Components and voice** (Buttons, Tone).
 - Each row: name, value (color shows a swatch), confidence bar (0–100%) or "Learning…", lock icon button (lucide `Lock` / `LockOpen`). Clicking the value opens the same control as Tweak for that token; saving dispatches `EDIT_TOKEN`.
 - Changed tokens get a 1.5 s highlight after an update (CSS animation, no library).
-- Reset lives in the toolbar: "Reset" → `window.confirm("Clear everything Style Twin has learned?")`.
+- Reset lives in the toolbar: "Reset" → `window.confirm("Clear everything Tailor has learned?")`.
 
 ### 12.6 States and copy
 
 | State | Copy / behavior |
 | --- | --- |
-| Loading | "Designing 3 options…" above three dashed wireframes whose blocks are placed one by one in a loop, while a "Style Twin" cursor moves between them (CSS only) |
+| Loading | "Designing 3 options…" above three dashed wireframes whose blocks are placed one by one in a loop, while a "Tailor" cursor moves between them (CSS only) |
 | Error | "Couldn't generate this time. Try again." + "Try again" button (re-sends `lastBrief`) |
 | First visit | No rounds; the canvas shows "What are we designing?" with the three presets as large cards |
 

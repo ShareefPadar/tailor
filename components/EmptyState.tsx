@@ -13,7 +13,7 @@ export function EmptyState({ disabled, onPreset }: EmptyStateProps) {
       <div className="space-y-2">
         <h2 className="text-[28px] font-semibold tracking-[-0.02em]">What are we designing?</h2>
         <p className="text-[15px] text-ink-2">
-          Describe a component, or start from a preset. Pick what you like and Style Twin learns your taste.
+          Describe a component, or start from a preset. Pick what you like and Tailor learns your taste.
         </p>
       </div>
       <div className="grid w-full gap-3 sm:grid-cols-3">

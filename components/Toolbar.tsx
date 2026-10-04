@@ -1,4 +1,4 @@
-import { Layers2 } from "lucide-react";
+import { Scissors } from "lucide-react";
 import { BUTTON_GHOST } from "./ui";
 
 interface ToolbarProps {
@@ -12,9 +12,9 @@ export function Toolbar({ title, busy, onReset }: ToolbarProps) {
     <header className="glass sticky top-3 z-30 grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-2xl px-3 lg:static">
       <div className="flex items-center gap-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-white">
-          <Layers2 size={14} aria-hidden="true" />
+          <Scissors size={13} aria-hidden="true" />
         </span>
-        <h1 className="whitespace-nowrap text-[13px] font-semibold">Style Twin</h1>
+        <h1 className="whitespace-nowrap text-[13px] font-semibold">Tailor</h1>
       </div>
       <p className="max-w-[46vw] truncate text-center text-[13px] text-ink-2">{title}</p>
       <div className="flex justify-end">
@@ -22,7 +22,7 @@ export function Toolbar({ title, busy, onReset }: ToolbarProps) {
           type="button"
           disabled={busy}
           onClick={() => {
-            if (window.confirm("Clear everything Style Twin has learned?")) onReset();
+            if (window.confirm("Clear everything Tailor has learned?")) onReset();
           }}
           className={BUTTON_GHOST}
         >

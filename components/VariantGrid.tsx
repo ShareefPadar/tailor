@@ -51,7 +51,7 @@ const FRAME_DELAYS = [
 
 const BLOCK = "animate-build rounded-full bg-ink/10";
 
-// Loading state: three wireframes being assembled while the Style Twin cursor moves between them.
+// Loading state: three wireframes being assembled while the Tailor cursor moves between them.
 export function VariantSkeletons() {
   return (
     <div className="animate-rise space-y-4" role="status" aria-busy="true">
@@ -71,7 +71,7 @@ export function VariantSkeletons() {
         <div aria-hidden="true" className="pointer-events-none absolute z-10 flex animate-roam items-start">
           <MousePointer2 size={18} className="fill-ink text-white drop-shadow-sm" />
           <span className="-ml-0.5 mt-3.5 rounded-full bg-ink px-2 py-0.5 text-[11px] font-medium text-white shadow-frame">
-            Style Twin
+            Tailor
           </span>
         </div>
       </div>
