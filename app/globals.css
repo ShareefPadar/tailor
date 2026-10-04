@@ -20,7 +20,8 @@
   --shadow-float: 0 0 0 1px rgb(0 0 0 / 0.05), 0 12px 40px rgb(0 0 0 / 0.14);
 
   --animate-flash: flash 1.5s ease-out;
-  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-build: build 2.6s ease-out infinite both;
+  --animate-roam: roam 5.2s ease-in-out infinite;
   --animate-rise: rise 0.25s ease-out both;
 
   /* Brief highlight on a profile token row after it changes. */
@@ -33,13 +34,41 @@
     }
   }
 
-  @keyframes shimmer {
-    0%,
+  /* Loading: wireframe blocks are placed one by one, then the loop starts over.
+     The end state is visible, so reduced-motion users see a complete wireframe. */
+  @keyframes build {
+    0% {
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+    }
+    22%,
     100% {
       opacity: 1;
+      transform: none;
     }
-    50% {
-      opacity: 0.45;
+  }
+
+  /* Loading: the Style Twin cursor visits each of the three frames in turn. */
+  @keyframes roam {
+    0%,
+    100% {
+      left: 6%;
+      top: 18%;
+    }
+    22%,
+    30% {
+      left: 16%;
+      top: 62%;
+    }
+    52%,
+    60% {
+      left: 50%;
+      top: 34%;
+    }
+    82%,
+    90% {
+      left: 82%;
+      top: 58%;
     }
   }
 

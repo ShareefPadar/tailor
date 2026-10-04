@@ -529,8 +529,8 @@ Titled "Rounds". One row per round, oldest first: number, truncated brief, and `
 
 - Transparent, so the dotted workspace shows through.
 - **VariantGrid:** 3 columns when the canvas is at least 640px wide (container query), otherwise 1.
-- **VariantCard (a frame):** the label above the frame, with a "Picked" or "Rejected" badge. Frame: white, hairline border, 16px radius, min-height 360px, content centred. Below: the applied note, chips `Uses: 16px · #16a34a · Compact` when `enforced` is non-empty, then actions Pick (primary), Reject (secondary), Tweak (ghost). Earlier rounds show no actions.
-  - Picked: ink ring around the frame. Rejected: frame at 50% opacity. After a pick, unpicked frames go to 70% opacity until rejected or the next round.
+- **VariantCard (a frame):** like a frame on a Figma canvas. The label sits above, with a "Picked" or "Rejected" badge. The rendered card sits directly on the dotted canvas with no container around it, top-aligned, in a column at most 300px wide. Below: the applied note, chips `Uses: 16px · #16a34a · Compact` when `enforced` is non-empty, then actions Pick (primary), Reject (secondary), Tweak (ghost). Earlier rounds show no actions.
+  - Picked: a 2px ink selection outline around the card, offset 6px. Rejected: card at 50% opacity. After a pick, unpicked cards go to 70% opacity until rejected or the next round.
 - **Prompt bar (BriefBar):** floats at the bottom centre of the canvas: glass, pill-shaped, input (placeholder: "Describe a component, e.g. pricing card for a food delivery app") and a round send button. Disabled while loading or when the input is empty. Enter submits. Three preset chips sit above it; tapping one fills the input and generates.
 - **TweakPopover:** glass panel anchored to its frame. Controls: radius slider 0–24 step 2; color via 6 swatches (#111827, #2563eb, #7c3aed, #16a34a, #e11d48, #ea580c) plus native color input; density segmented control; tone select. The card preview updates live. Apply commits a tweak action with changed tokens only. Cancel reverts. Escape closes.
 
@@ -547,7 +547,7 @@ Titled "Rounds". One row per round, oldest first: number, truncated brief, and `
 
 | State | Copy / behavior |
 | --- | --- |
-| Loading | 3 skeleton frames, "Designing 3 options…" |
+| Loading | "Designing 3 options…" above three dashed wireframes whose blocks are placed one by one in a loop, while a "Style Twin" cursor moves between them (CSS only) |
 | Error | "Couldn't generate this time. Try again." + "Try again" button (re-sends `lastBrief`) |
 | First visit | No rounds; the canvas shows "What are we designing?" with the three presets as large cards |
 

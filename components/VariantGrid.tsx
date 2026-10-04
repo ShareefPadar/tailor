@@ -1,9 +1,11 @@
+import { MousePointer2 } from "lucide-react";
 import type { Round } from "../lib/store";
 import type { Tokens } from "../lib/types";
 import { VariantCard } from "./VariantCard";
 
 // 3 across when the canvas is at least 640px wide (container query), otherwise 1.
-const GRID = "mx-auto grid max-w-md grid-cols-1 gap-4 @[640px]:max-w-none @[640px]:grid-cols-3";
+// Frames are top-aligned, like frames on a Figma canvas.
+const GRID = "grid grid-cols-1 items-start gap-x-4 gap-y-8 @[640px]:grid-cols-3";
 
 export interface RoundActions {
   onPick: (variantId: string) => void;
@@ -39,25 +41,39 @@ export function VariantGrid({ round, actions }: VariantGridProps) {
   );
 }
 
+// Literal class names so Tailwind can see them: each wireframe starts a little later than the last,
+// and each block within it later still, so the three designs appear to be built in turn.
+const FRAME_DELAYS = [
+  ["[animation-delay:0ms]", "[animation-delay:140ms]", "[animation-delay:280ms]", "[animation-delay:420ms]"],
+  ["[animation-delay:500ms]", "[animation-delay:640ms]", "[animation-delay:780ms]", "[animation-delay:920ms]"],
+  ["[animation-delay:1000ms]", "[animation-delay:1140ms]", "[animation-delay:1280ms]", "[animation-delay:1420ms]"],
+];
+
+const BLOCK = "animate-build rounded-full bg-ink/10";
+
+// Loading state: three wireframes being assembled while the Style Twin cursor moves between them.
 export function VariantSkeletons() {
   return (
     <div className="animate-rise space-y-4" role="status" aria-busy="true">
       <p className="px-1 text-ink-2">Designing 3 options…</p>
-      <div className={GRID}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex flex-col gap-2.5">
-            <div className="mx-1 h-3 w-20 animate-shimmer rounded-full bg-fill-2" />
-            <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-hairline bg-white p-3 shadow-frame">
-              <div className="w-full max-w-[220px] animate-shimmer space-y-3">
-                <div className="h-4 w-2/3 rounded-full bg-fill-2" />
-                <div className="h-3 w-full rounded-full bg-fill" />
-                <div className="h-3 w-5/6 rounded-full bg-fill" />
-                <div className="h-9 w-full rounded-xl bg-fill-2" />
-              </div>
+      <div className={`${GRID} relative`}>
+        {FRAME_DELAYS.map((delays, i) => (
+          <div key={i} className="w-full max-w-[300px] space-y-2.5">
+            <div className={`${BLOCK} ${delays[0]} mx-1 h-2.5 w-16`} />
+            <div className="space-y-3 rounded-2xl border border-dashed border-ink/20 p-5">
+              <div className={`${BLOCK} ${delays[0]} h-4 w-2/3`} />
+              <div className={`${BLOCK} ${delays[1]} h-2.5 w-full bg-ink/[0.07]`} />
+              <div className={`${BLOCK} ${delays[2]} h-2.5 w-4/5 bg-ink/[0.07]`} />
+              <div className={`${BLOCK} ${delays[3]} mt-5 h-9 w-full rounded-xl bg-ink/15`} />
             </div>
-            <div className="mx-1 h-3 w-2/3 animate-shimmer rounded-full bg-fill" />
           </div>
         ))}
+        <div aria-hidden="true" className="pointer-events-none absolute z-10 flex animate-roam items-start">
+          <MousePointer2 size={18} className="fill-ink text-white drop-shadow-sm" />
+          <span className="-ml-0.5 mt-3.5 rounded-full bg-ink px-2 py-0.5 text-[11px] font-medium text-white shadow-frame">
+            Style Twin
+          </span>
+        </div>
       </div>
     </div>
   );

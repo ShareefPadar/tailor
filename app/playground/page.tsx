@@ -58,13 +58,11 @@ export default function PlaygroundPage() {
     <main className="bg-dots min-h-dvh p-6">
       <div className="mx-auto max-w-5xl">
         <h1 className="mb-6 text-[15px] font-semibold">Renderer playground</h1>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid items-start gap-x-4 gap-y-8 md:grid-cols-3">
           {cases.map(({ spec, tokens }, i) => (
-            <section key={SEEDS[i].label} className="flex flex-col gap-2.5">
+            <section key={SEEDS[i].label} className="flex w-full max-w-[300px] flex-col gap-2.5">
               <p className="px-1 text-[12px] font-medium text-ink-2">{SEEDS[i].label}</p>
-              <div className="flex min-h-[360px] flex-1 items-center rounded-2xl border border-hairline bg-white p-3 shadow-frame">
-                <Render spec={spec} tokens={tokens} />
-              </div>
+              <Render spec={spec} tokens={tokens} />
             </section>
           ))}
         </div>
