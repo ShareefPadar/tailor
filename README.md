@@ -1,6 +1,6 @@
 # Tailor
 
-UI tailored to your taste: an AI co-designer that learns your style. Live: <vercel-url>
+UI tailored to your taste: an AI co-designer that learns your style. Live: https://tailor-lovat.vercel.app
 
 ## What it does
 Give it a brief, get three UI variants. Pick, reject, or tweak, and it builds a visible
