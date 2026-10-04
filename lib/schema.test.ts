@@ -84,6 +84,66 @@ describe("building blocks", () => {
   });
 });
 
+describe("atoms", () => {
+  it("accepts avatar, icon, row, progress, toggle, chips, rating and note", () => {
+    const children = childrenOf(
+      wrap(card([
+        { type: "icon", name: "truck" },
+        { type: "avatar", name: "Maya Chen", caption: "Your courier" },
+        { type: "progress", value: 60, label: "Packed" },
+        { type: "chips", items: ["Monthly", "Yearly"], selected: 1 },
+        { type: "toggle", label: "Order updates", on: true },
+        { type: "rating", value: 4.5, caption: "128 reviews" },
+        { type: "note", text: "Free returns for 30 days." },
+        { type: "row", children: [{ type: "button", text: "Call" }, { type: "button", text: "Chat", variant: "ghost" }] },
+      ])),
+    );
+    expect(children.map((c) => c.type)).toEqual([
+      "icon", "avatar", "progress", "chips", "toggle", "rating", "note", "row",
+    ]);
+  });
+
+  it("clamps and repairs numeric fields", () => {
+    const [progress, rating, chips, toggle, icon] = childrenOf(
+      wrap(card([
+        { type: "progress", value: 140 },
+        { type: "rating", value: 7.3 },
+        { type: "chips", items: ["S", "M", "L"], selected: 9 },
+        { type: "toggle", label: "Alerts", on: "yes" },
+        { type: "icon", name: "unicorn" },
+      ])),
+    );
+    expect(progress).toMatchObject({ value: 100 });
+    expect(rating).toMatchObject({ value: 5 });
+    expect(chips).toMatchObject({ selected: 2 });
+    expect(toggle).toMatchObject({ on: false });
+    expect(icon).toMatchObject({ name: "sparkles" });
+  });
+
+  it("rounds ratings to half stars and progress to whole numbers", () => {
+    const [rating, progress] = childrenOf(wrap(card([{ type: "rating", value: 3.3 }, { type: "progress", value: "42.6" }])));
+    expect(rating).toMatchObject({ value: 3.5 });
+    expect(progress).toMatchObject({ value: 43 });
+  });
+
+  it("a row keeps at most 3 blocks and drops cards and rows inside it", () => {
+    const [row] = childrenOf(
+      wrap(card([{ type: "row", children: [card([text]), { type: "row", children: [text] }, text, text, text, text] }])),
+    );
+    expect(row.type === "row" && row.children.map((c) => c.type)).toEqual(["text", "text", "text"]);
+  });
+
+  it("a row does not count as a nesting level", () => {
+    const nested = card([card([{ type: "row", children: [text, text] }])]);
+    expect(validateVariants(wrap(nested)).ok).toBe(true);
+  });
+
+  it("fills the alignment and surface tokens with defaults when invalid", () => {
+    const result = validateVariants(wrap(card([text]), { ...DEFAULT_TOKENS, align: "justify", surface: "glass" }));
+    expect(result.ok && result.variants[0].tokens).toMatchObject({ align: "left", surface: "plain" });
+  });
+});
+
 describe("design rules enforced in code", () => {
   const button = (variant?: string) => ({ type: "button", text: "Go", ...(variant ? { variant } : {}) });
   const variants = (raw: unknown) =>
@@ -99,10 +159,29 @@ describe("design rules enforced in code", () => {
     expect(variants(wrap(card([card([button("primary")]), button("primary")])))).toEqual(["primary", "secondary"]);
   });
 
-  it("leaves secondary and ghost buttons alone", () => {
+  it("counts primaries inside a row", () => {
+    const [row] = childrenOf(wrap(card([{ type: "row", children: [button("primary"), button("primary")] }])));
+    expect(row.type === "row" && row.children.map((c) => (c.type === "button" ? c.variant : null))).toEqual([
+      "primary", "secondary",
+    ]);
+  });
+
+  it("leaves secondary and ghost buttons alone when there is a primary", () => {
     expect(variants(wrap(card([button("ghost"), button("secondary"), button("primary")])))).toEqual([
       "ghost", "secondary", "primary",
     ]);
+  });
+
+  it("promotes the first button when none is primary", () => {
+    expect(variants(wrap(card([text, button("secondary"), button("ghost")])))).toEqual(["primary", "ghost"]);
+    const [row] = childrenOf(wrap(card([{ type: "row", children: [button("ghost"), button("secondary")] }])));
+    expect(row.type === "row" && row.children.map((c) => (c.type === "button" ? c.variant : null))).toEqual([
+      "primary", "secondary",
+    ]);
+  });
+
+  it("does nothing for a card with no buttons", () => {
+    expect(childrenOf(wrap(card([text]))).map((c) => c.type)).toEqual(["text"]);
   });
 
   it("removes leading, trailing and doubled dividers", () => {

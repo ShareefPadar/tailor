@@ -51,6 +51,8 @@ components/
   ChangeLog.tsx
   render/Render.tsx       renders a Node tree with tokens
   render/Blocks.tsx       badge, stat, rows, steps, divider
+  render/Atoms.tsx        avatar, icon, progress, toggle, chips, rating, note
+  LayoutTastePanel.tsx    liked and avoided blocks, size preference
 lib/
   types.ts
   tokens.ts               defaults, seeds, token-to-style mapping, contrastText
@@ -64,6 +66,8 @@ lib/
   store.ts                useReducer state
   useTasteSummary.ts      debounced call to /api/summarize
   response.ts             shape check for the /api/generate reply
+  taste.ts                layoutTaste(): structure learned from picks and rejects
+  taste.test.ts
 data/
   preset-cache.json       starts as {}
 scripts/
@@ -81,6 +85,12 @@ export type Mode = "light" | "dark";
 export type ButtonStyle = "filled" | "outline" | "soft";
 export type BorderStyle = "none" | "hairline" | "bold";
 export type HeadingWeight = "regular" | "bold" | "heavy";
+export type Align = "left" | "center";
+export type Surface = "plain" | "tinted" | "gradient";
+
+export type IconName =
+  | "truck" | "package" | "check" | "star" | "zap" | "heart" | "shield" | "clock" | "card" | "user"
+  | "mail" | "pin" | "gift" | "sparkles" | "bell" | "bag" | "dumbbell" | "utensils" | "calendar" | "lock";
 
 export interface Tokens {
   radius: number; // 0–24, even integers
@@ -93,6 +103,8 @@ export interface Tokens {
   buttonStyle: ButtonStyle; // how primary buttons are drawn
   border: BorderStyle; // card and input borders
   headingWeight: HeadingWeight;
+  align: Align; // text and block alignment inside the card
+  surface: Surface; // card background treatment
 }
 export type TokenKey = keyof Tokens;
 // Every token except radius and primary is a category: a fixed set of options with scores.
@@ -109,7 +121,24 @@ export type Node =
   | { type: "stat"; value: string; caption?: string } // a price or key number
   | { type: "rows"; items: { label: string; value: string }[] } // label-value details
   | { type: "steps"; items: string[]; current: number } // progress; current is a 0-based index
-  | { type: "divider" };
+  | { type: "divider" }
+  | { type: "avatar"; name: string; caption?: string } // a person: initials, name, optional line
+  | { type: "icon"; name: IconName } // a single icon in a tinted tile
+  | { type: "row"; children: Node[] } // 2-3 blocks side by side; no cards or rows inside
+  | { type: "progress"; value: number; label?: string } // 0-100
+  | { type: "toggle"; label: string; on: boolean } // a setting with a switch
+  | { type: "chips"; items: string[]; selected: number } // selectable options; selected is a 0-based index
+  | { type: "rating"; value: number; caption?: string } // 0-5 stars
+  | { type: "note"; text: string }; // a tinted callout
+
+export type BlockType = Node["type"];
+
+// What the designer's picks and rejects say about layout, beyond style tokens (see lib/taste.ts).
+export interface LayoutTaste {
+  liked: BlockType[]; // blocks in picked variants, most favoured first
+  avoided: BlockType[]; // blocks that only appeared in rejected variants
+  size: "lean" | "balanced" | "rich" | null; // how many blocks picked cards have; null until a pick
+}
 
 export interface Variant {
   id: string;
@@ -156,6 +185,7 @@ export interface ProfilePayload {
   enforced: TokenKey[];
   confidence: Record<TokenKey, number | null>;
   summary: string | null;
+  layout?: LayoutTaste; // guidance for the AI; never enforced in code
 }
 ```
 
@@ -168,20 +198,21 @@ export const DEFAULT_TOKENS: Tokens = {
   radius: 8, primary: "#2563eb", density: "comfortable",
   shadow: "soft", font: "Inter", tone: "neutral",
   mode: "light", buttonStyle: "filled", border: "none", headingWeight: "bold",
+  align: "left", surface: "plain",
 };
 ```
 
-Token keys, in order: `radius`, `primary`, `density`, `shadow`, `font`, `tone`, `mode`, `buttonStyle`, `border`, `headingWeight`. Display names: Radius, Color, Density, Shadow, Font, Tone, Appearance, Buttons, Border, Headings. Every token except `radius` and `primary` is a category.
+Token keys, in order: `radius`, `primary`, `density`, `shadow`, `font`, `tone`, `mode`, `buttonStyle`, `border`, `headingWeight`, `align`, `surface`. Display names: Radius, Color, Density, Shadow, Font, Tone, Appearance, Buttons, Border, Headings, Alignment, Surface. Every token except `radius` and `primary` is a category.
 
 ### 5.2 Round 1 seeds (fixed order)
 
-| Index | Label | radius | primary | density | shadow | font | tone | mode | buttonStyle | border | headingWeight |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | Minimal | 4 | #111827 | spacious | none | Inter | neutral | light | outline | hairline | regular |
-| 1 | Bold | 6 | #7c3aed | compact | strong | Space Grotesk | premium | dark | filled | bold | heavy |
-| 2 | Playful | 20 | #16a34a | comfortable | soft | DM Sans | playful | light | filled | none | bold |
+| Index | Label | radius | primary | density | shadow | font | tone | mode | buttonStyle | border | headingWeight | align | surface |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | Minimal | 4 | #111827 | spacious | none | Inter | neutral | light | outline | hairline | regular | center | plain |
+| 1 | Bold | 6 | #7c3aed | compact | strong | Space Grotesk | premium | dark | filled | bold | heavy | left | gradient |
+| 2 | Playful | 20 | #16a34a | comfortable | soft | DM Sans | playful | light | filled | none | bold | left | plain |
 
-Playful uses the defaults for the four newer tokens, so the worked example in §8.7 still logs exactly four changes.
+Playful uses the defaults for the six newer tokens, so the worked example in §8.7 still logs exactly four changes.
 
 ### 5.3 Token-to-style mapping
 
@@ -210,6 +241,8 @@ Appearance, buttons, border and headings:
 | `--st-btn-bg`, `--st-btn-fg`, `--st-btn-line` | buttonStyle | primary button. filled → primary / `contrastText(primary)` / transparent; outline → transparent / primary / primary; soft → tint / primary / transparent |
 | `--st-btn2-bg`, `--st-btn2-line` | buttonStyle | secondary button: the outline look, or the soft look when buttonStyle is outline |
 | `--st-heading-weight` | headingWeight | regular `400`, bold `600`, heavy `800` |
+| `--st-card-bg` | surface, primary, mode | plain → the surface colour; tinted → `color-mix(primary 7%, surface)`; gradient → `linear-gradient(165deg, color-mix(primary 18%, surface), surface 62%)` |
+| `--st-align`, `--st-justify` | align | `left` / `flex-start`, or `center` / `center` |
 
 Density:
 
@@ -227,9 +260,9 @@ Fonts are loaded in `app/layout.tsx` with `next/font/google` (`Inter`, `DM_Sans`
 
 ## 6. Renderer (`components/render/Render.tsx`, `components/render/Blocks.tsx`)
 
-`<Render spec={node} tokens={tokens} />` walks the tree. `Render.tsx` holds the root (the only place with inline styles) and the six original blocks. `Blocks.tsx` holds the five newer ones.
+`<Render spec={node} tokens={tokens} />` walks the tree. `Render.tsx` holds the root (the only place with inline styles), the six original blocks and `row`. `Blocks.tsx` holds badge, stat, rows, steps and divider. `Atoms.tsx` holds avatar, icon, progress, toggle, chips, rating and note.
 
-- **card:** `--st-surface` background, `--st-radius`, `--st-shadow`, padding and gap from density, flex column, `width: 100%`, `max-width: 300px`, border from `--st-border-card`. A nested card uses `--st-surface-2`, with no shadow and no border.
+- **card:** `--st-card-bg` background, text aligned by `--st-align`, `--st-radius`, `--st-shadow`, padding and gap from density, flex column, `width: 100%`, `max-width: 300px`, border from `--st-border-card`. A nested card uses `--st-surface-2`, with no shadow and no border.
 - **heading:** level 1 = 24px, 2 = 20px, 3 = 17px; weight from `--st-heading-weight`; default level 2.
 - **text:** base size; `muted` → `--st-muted`.
 - **button:** full width; `--st-radius-sm`; 1.5px border on all three so they are the same size. primary uses `--st-btn-*`. secondary uses `--st-btn2-*` with `--st-primary` text. ghost = `--st-primary` text, no fill, no visible border.
@@ -240,6 +273,15 @@ Fonts are loaded in `app/layout.tsx` with `next/font/google` (`Inter`, `DM_Sans`
 - **rows:** label on the left in `--st-muted`, value on the right in medium weight.
 - **steps:** one row per stage with a dot. Before `current`: filled `--st-primary` with a check. At `current`: ringed, label semibold. After: `--st-line` ring, muted label.
 - **divider:** a 1px line in `--st-line`.
+- **row:** its children side by side, each taking an equal share.
+- **avatar:** a round tile with the initials (first letters of up to two words) in `--st-primary` on `--st-tint`, then the name and an optional muted caption.
+- **icon:** one lucide icon, 22px, in `--st-primary` on a 44px `--st-tint` tile with `--st-radius-sm`.
+- **progress:** an optional muted label and the percentage, above an 8px bar: `--st-line` track, `--st-primary` fill. The width is an SVG attribute, not an inline style.
+- **toggle:** the label on the left and a switch on the right: `--st-primary` when on, `--st-line` when off.
+- **chips:** pills in a wrapping row. The selected one is filled with `--st-primary`; the others have a `--st-line` border.
+- **rating:** five 16px stars, filled in `--st-primary` up to the rounded value, with an optional muted caption.
+- **note:** a `--st-tint` box with an info icon and the text.
+- **Alignment:** badge, stat, avatar, icon, chips and rating follow `--st-justify`. Lists, rows, steps, inputs, progress, toggles and notes stay left-aligned.
 - Unknown node types never reach the renderer (schema strips them), but render `null` defensively.
 - All text uses `--st-font` and `--st-text`. The root resets line-height and letter-spacing so shell typography never leaks into a preview.
 
@@ -258,8 +300,10 @@ Rules:
 - `label` max 24 chars, `applied` max 90 chars (truncate).
 - `badge.text` max 28 chars, `stat.value` max 20, `stat.caption` max 40 and optional, `rows` max 5 items (label max 40, value max 60, at least 1), `steps` 2–5 items (max 60 chars each). `steps.current` is coerced to a number, rounded and clamped into the list; invalid → 0.
 
+- `avatar.name` max 40, caption max 60 and optional. `icon.name` must be one of the 20 icon names; invalid → `sparkles`. `row` keeps at most 3 children, drops any card or row inside it, needs at least 1, and does not count as a nesting level. `progress.value` is coerced, clamped to 0–100 and rounded; invalid → 0. `toggle.on` invalid → false. `chips` 2–5 items (max 24 chars each); `selected` is clamped into the list. `rating.value` is clamped to 0–5 and rounded to half stars; invalid → 5. `note.text` max 120.
+
 Design rules enforced in code after validation, so they hold whatever the model returns:
-- One primary button per variant. The first primary button (a missing `variant` counts as primary) keeps it; later ones become `secondary`. This counts across a nested card.
+- Exactly one primary button per variant that has buttons. The first primary button (a missing `variant` counts as primary) keeps it; later ones become `secondary`. If no button is primary, the first button is promoted. This counts across nested cards and rows.
 - Dividers: leading, trailing and doubled dividers are removed.
 
 Validated variants get `id: crypto.randomUUID()` and `enforced: []` before enforcement.
@@ -346,7 +390,7 @@ Start: `initialProfile()`. Round 1 variants use seeds.
 - Expected: 4 log entries. All confidences `null` (1 signal each).
 
 **Action 2 — reject Bold** (6, #7c3aed, compact, strong, Space Grotesk, premium)
-- compact −0.5, strong −0.5, Space Grotesk −0.5, premium −0.5, dark −0.5, filled −0.5 (now 0.5), bold border −0.5, heavy −0.5. radius and primary untouched.
+- compact −0.5, strong −0.5, Space Grotesk −0.5, premium −0.5, dark −0.5, filled −0.5 (now 0.5), bold border −0.5, heavy −0.5, left −0.5 (now 0.5), gradient −0.5. radius and primary untouched.
 - Expected: no token changes, no log entries.
 
 **Round 2** — payload has `enforced: []`, so the AI only leans toward the profile.
@@ -356,12 +400,12 @@ Start: `initialProfile()`. Round 1 variants use seeds.
 - primary unchanged. density 2, shadow 2, font DM Sans 2 — all unchanged.
 - tone: playful 1, friendly 1 → tie with current → stays playful.
 - Expected confidences: radius 1.0 (both samples within ±4 of 16), primary 1.0, density 1.0, shadow 1.0, font 1.0, tone 0.5.
-- The four newer tokens agree across both picks (light, filled, none, bold), so each has confidence 1.0. Button style: filled is 1 − 0.5 + 1 = 1.5, because the rejected Bold was also filled.
-- Expected `enforcedKeys`: radius, primary, density, shadow, font, mode, buttonStyle, border, headingWeight. Not tone.
+- The six newer tokens agree across both picks (light, filled, none, bold, left, plain), so each has confidence 1.0. Button style and alignment are 1 − 0.5 + 1 = 1.5, because the rejected Bold was also filled and left-aligned.
+- Expected `enforcedKeys`: radius, primary, density, shadow, font, mode, buttonStyle, border, headingWeight, align, surface. Not tone.
 
 **Action 4 — tweak tone to friendly**
 - friendly = 1 + 2 = 3; tone set directly → friendly. Log: Tone Playful → Friendly, "You tweaked it on {label}".
-- Expected tone confidence: 3 ÷ (1 + 3) = 0.75, signals 3 → tone now enforced too. All ten tokens are then enforced.
+- Expected tone confidence: 3 ÷ (1 + 3) = 0.75, signals 3 → tone now enforced too. All twelve tokens are then enforced.
 
 **Lock tests**
 - Edit radius to 24 → radius 24, locked, log "You set it (locked)". Then pick a variant with radius 4 → radius stays 24, no log.
@@ -370,6 +414,16 @@ Start: `initialProfile()`. Round 1 variants use seeds.
 **Edge tests**
 - Reject only (no picks) → `hasProfile` false, no token changes.
 - Samples averaging 13 → rounds to 14. Tweak to 30 is impossible (UI caps at 24), but `updateProfile` clamps anyway.
+
+### 8.8 Layout taste (`lib/taste.ts`)
+
+Style tokens say how a card looks. Layout taste says how it is built. `layoutTaste(rounds): LayoutTaste` is pure and reads the rounds' variants and marks.
+
+- Only structural blocks carry signal: list, stat, rows, steps, badge, input, avatar, icon, row, progress, toggle, chips, rating, note. Headings, text, buttons, dividers and cards are ignored.
+- Each block type present in a picked variant scores +1; in a rejected variant −0.5. A block counts once per variant, and nested cards and rows are searched.
+- `liked`: score ≥ 1, highest first, at most 4. `avoided`: score < 0, lowest first, at most 4. Ties keep the order above.
+- `size`: the average number of blocks in the root card of picked variants. ≤ 4 → `lean`, ≥ 6 → `rich`, otherwise `balanced`. `null` until there is a pick.
+- The client adds it to the payload as `layout`. It appears in the prompt (§10.3) and in the inspector (§12.5). It guides the AI and is **never enforced in code**.
 
 ## 9. API
 
@@ -406,7 +460,7 @@ export async function generateVariants(brief: string, payload: ProfilePayload | 
 
 Request:
 ```json
-{ "brief": "string, 1–200 chars", "profile": "ProfilePayload | null" }
+{ "brief": "string, 1–200 chars", "profile": "ProfilePayload | null (may carry layout, see §8.8)" }
 ```
 
 Responses:
@@ -452,7 +506,8 @@ Tokens:
  "shadow": "none"|"soft"|"strong", "font": "Inter"|"DM Sans"|"Space Grotesk",
  "tone": "neutral"|"friendly"|"playful"|"premium", "mode": "light"|"dark",
  "buttonStyle": "filled"|"outline"|"soft", "border": "none"|"hairline"|"bold",
- "headingWeight": "regular"|"bold"|"heavy"}
+ "headingWeight": "regular"|"bold"|"heavy", "align": "left"|"center",
+ "surface": "plain"|"tinted"|"gradient"}
 
 Node is one of:
 {"type":"card","children":[Node, ...]}   root must be a card, 3-7 children, may contain one nested card
@@ -466,6 +521,14 @@ Node is one of:
 {"type":"rows","items":[{"label":string,"value":string}, ...]}   label-value details, max 5
 {"type":"steps","items":[string, ...],"current":number}   progress through 2-5 stages; current is the 0-based index of the active stage
 {"type":"divider"}
+{"type":"avatar","name":string,"caption":string}   a person: shows initials, the name, and a short line such as a role or rating
+{"type":"icon","name":"truck"|"package"|"check"|"star"|"zap"|"heart"|"shield"|"clock"|"card"|"user"|"mail"|"pin"|"gift"|"sparkles"|"bell"|"bag"|"dumbbell"|"utensils"|"calendar"|"lock"}   one icon in a tinted tile
+{"type":"row","children":[Node, Node]}   2-3 blocks side by side, e.g. two buttons or two stats. No card or row inside.
+{"type":"progress","value":0-100,"label":string}   a bar for completion, usage or a goal
+{"type":"toggle","label":string,"on":boolean}   one setting with a switch
+{"type":"chips","items":[string, ...],"selected":number}   2-5 selectable options, e.g. billing period or size; selected is a 0-based index
+{"type":"rating","value":0-5,"caption":string}   stars, e.g. caption "128 reviews"
+{"type":"note","text":string}   a tinted callout for a tip, a guarantee or a warning
 
 Design rules:
 - Design the component the brief asks for, for that product. Use its real domain: plausible names, prices, times, quantities and places. Never lorem ipsum and never placeholders like "Feature 1" or "Item name".
@@ -476,11 +539,22 @@ Design rules:
   Use steps only for a real sequence with a current stage, such as an order, a delivery or onboarding.
   Never use steps for features, benefits or perks: those are a list.
   Forms -> 2 to 4 inputs with helpful example placeholders, then the submit button.
+  A person (driver, host, reviewer, account owner) -> avatar. Completion, usage or a goal -> progress.
+  A choice between a few options (monthly or yearly, a size) -> chips. On/off settings -> toggle.
+  Reviews and quality -> rating. A tip, a guarantee or a warning -> note. One icon can open a card to set its subject.
+  Two actions of similar weight, or two numbers to compare -> put them in a row.
 - Exactly one primary button per variant. A second action, if it is really needed, is "secondary" or "ghost". Button text is a verb phrase of 1 to 3 words.
 - Say each thing once. Do not repeat the same information in two blocks, and do not add a block just to fill space.
 - A nested card only groups related secondary content, such as an order summary. Use at most one.
 - Keep copy tight: headings under 40 characters, body text one short sentence, list and step items a few words.
 - The three variants must differ in structure: different blocks, different order, different emphasis. Not the same layout with new words.
+- Patterns that work, as starting points to vary, not to copy:
+  Pricing: badge, heading, stat, chips for the billing period, list of benefits, button.
+  Order or delivery status: badge, heading, steps, avatar for the courier, rows of details, button.
+  Sign-up or checkout: icon, heading, short text, inputs, note on privacy or a guarantee, button.
+  Profile or account: avatar, rows, progress, a row of two buttons.
+  Settings: heading, toggles, divider, button.
+  Review or product: heading, rating, text, avatar of the reviewer, button.
 - Write copy in the variant's tone: neutral = plain and clear; friendly = warm and short;
   playful = fun, light wordplay; premium = confident and refined.
 - Max nesting depth 3. Every text under 120 characters. Use only the fields described.
@@ -492,9 +566,9 @@ Design rules:
 Brief: {brief}
 
 Design 3 variants in this exact order, using exactly these tokens:
-1. "Minimal": radius 4, #111827, spacious, no shadow, Inter, neutral tone, light mode, outline buttons, hairline border, regular headings. Sparse, lots of breathing room.
-2. "Bold": radius 6, #7c3aed, compact, strong shadow, Space Grotesk, premium tone, dark mode, filled buttons, bold border, heavy headings. Dense, confident hierarchy.
-3. "Playful": radius 20, #16a34a, comfortable, soft shadow, DM Sans, playful tone, light mode, filled buttons, no border, bold headings. Friendly and light.
+1. "Minimal": radius 4, #111827, spacious, no shadow, Inter, neutral tone, light mode, outline buttons, hairline border, regular headings, centered, plain surface. Sparse, lots of breathing room.
+2. "Bold": radius 6, #7c3aed, compact, strong shadow, Space Grotesk, premium tone, dark mode, filled buttons, bold border, heavy headings, left aligned, gradient surface. Dense, confident hierarchy.
+3. "Playful": radius 20, #16a34a, comfortable, soft shadow, DM Sans, playful tone, light mode, filled buttons, no border, bold headings, left aligned, plain surface. Friendly and light.
 
 For "applied", describe the style in a few words, e.g. "Airy layout with neutral copy".
 ```
@@ -515,6 +589,15 @@ Make the 3 variants differ in layout, hierarchy, and copy, not style.
 "applied" names the profile values you used, e.g. "Your 16px radius, compact spacing and friendly copy".
 ```
 
+When the payload carries `layout` with anything learned, this block is inserted after the Taste line:
+
+```text
+Layout taste, learned from picks and rejects. Follow it where it suits the brief:
+- Often picks cards with: stat, list
+- Has rejected cards with: rows
+- Prefers lean cards, about 3 to 4 blocks
+```
+
 Line format per token: enforced → `(REQUIRED)`; confidence not null → `(leaning, {pct}% confident)`; null → `(learning)`.
 
 ### 10.4 Summary prompts
@@ -528,7 +611,7 @@ Picks and tweaks are likes. Rejects are dislikes.
 ```
 
 User: one line per action, e.g.
-`PICK "Playful": radius 20, color #16a34a, comfortable, soft shadow, DM Sans, playful tone, light mode, filled buttons, no border, bold headings`
+`PICK "Playful": radius 20, color #16a34a, comfortable, soft shadow, DM Sans, playful tone, light mode, filled buttons, no border, bold headings, left aligned, plain surface`
 
 ## 11. Client state (`lib/store.ts`)
 
@@ -606,7 +689,8 @@ Theme tokens live in `app/globals.css` and are used through Tailwind classes. Sh
 
 - Title "Style Profile".
 - Summary: 17px. Empty profile: "No style learned yet. Pick a variant to start."
-- Token rows in three groups: **Look** (Appearance, Color, Radius, Shadow, Border), **Type and spacing** (Font, Headings, Density), **Components and voice** (Buttons, Tone).
+- Token rows in three groups: **Look** (Appearance, Color, Surface, Radius, Shadow, Border), **Type and spacing** (Font, Headings, Alignment, Density), **Components and voice** (Buttons, Tone).
+- **Layout taste** section below the tokens: "Likes" and "Avoids" as chips with plain names (Checklist, Big number, Detail rows, Progress steps, Badge, Inputs, Avatar, Icon, Side by side, Progress bar, Toggles, Option chips, Rating, Callout), the size preference, and the line "Guides the AI. Not enforced, unlike the tokens above." Empty: "Pick or reject variants and Tailor learns which blocks you favour."
 - Each row: name, value (color shows a swatch), confidence bar (0–100%) or "Learning…", lock icon button (lucide `Lock` / `LockOpen`). Clicking the value opens the same control as Tweak for that token; saving dispatches `EDIT_TOKEN`.
 - Changed tokens get a 1.5 s highlight after an update (CSS animation, no library).
 - Reset lives in the toolbar: "Reset" → `window.confirm("Clear everything Tailor has learned?")`.

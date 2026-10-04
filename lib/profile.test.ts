@@ -35,6 +35,7 @@ describe("initial profile", () => {
     expect(p.tokens).toEqual({
       radius: 8, primary: "#2563eb", density: "comfortable", shadow: "soft", font: "Inter", tone: "neutral",
       mode: "light", buttonStyle: "filled", border: "none", headingWeight: "bold",
+      align: "left", surface: "plain",
     });
     expect(Object.values(p.locked).every((l) => !l)).toBe(true);
     expect(p.radiusSamples).toEqual([]);
@@ -123,8 +124,14 @@ describe("worked example (SPEC 8.7)", () => {
     expect(confidence(p, "buttonStyle")).toBe(1);
     expect(confidence(p, "border")).toBe(1);
     expect(confidence(p, "headingWeight")).toBe(1);
+    // Alignment: left 1 - 0.5 (Bold was left-aligned too) + 1 = 1.5. Surface: plain 2, gradient -0.5.
+    expect(p.scores.align).toEqual({ left: 1.5, center: 0 });
+    expect(p.scores.surface).toEqual({ plain: 2, tinted: 0, gradient: -0.5 });
+    expect(confidence(p, "align")).toBe(1);
+    expect(confidence(p, "surface")).toBe(1);
     expect(enforcedKeys(p)).toEqual([
       "radius", "primary", "density", "shadow", "font", "mode", "buttonStyle", "border", "headingWeight",
+      "align", "surface",
     ]);
     expect(enforcedKeys(p)).not.toContain("tone");
   });
@@ -142,6 +149,7 @@ describe("worked example (SPEC 8.7)", () => {
     expect(enforcedKeys(p)).toContain("tone");
     expect(toPayload(p)?.enforced).toEqual([
       "radius", "primary", "density", "shadow", "font", "tone", "mode", "buttonStyle", "border", "headingWeight",
+      "align", "surface",
     ]);
   });
 });
@@ -235,6 +243,16 @@ describe("appearance, buttons, border and headings", () => {
     p = [act("pick", PLAYFUL, "A"), act("pick", PLAYFUL, "B")].reduce(updateProfile, p);
     expect(p.tokens.mode).toBe("dark");
     expect(enforcedKeys(p)).toContain("mode");
+  });
+
+  it("picking the centred Minimal seed learns alignment; picking Bold learns the gradient surface", () => {
+    const minimal = run(act("pick", SEEDS[0].tokens, "Minimal"));
+    expect(minimal.tokens.align).toBe("center");
+    expect(logOf(minimal, "align")[0]).toMatchObject({ from: "Left", to: "Center" });
+    expect(logOf(minimal, "surface")).toHaveLength(0); // plain was already the value
+    const bold = run(act("pick", BOLD, "Bold"));
+    expect(bold.tokens.surface).toBe("gradient");
+    expect(logOf(bold, "surface")[0]).toMatchObject({ from: "Plain", to: "Gradient" });
   });
 
   it("tweaking button style sets it directly with weight 2", () => {

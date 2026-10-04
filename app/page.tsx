@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer, useState } from "react";
 import { BriefBar } from "../components/BriefBar";
 import { Canvas } from "../components/Canvas";
 import { ChangeLog } from "../components/ChangeLog";
@@ -15,6 +15,7 @@ import { VariantSkeletons } from "../components/VariantGrid";
 import { hasProfile, toPayload } from "../lib/profile";
 import { isGenerateResponse } from "../lib/response";
 import { createInitialState, reducer } from "../lib/store";
+import { layoutTaste } from "../lib/taste";
 import { useTasteSummary } from "../lib/useTasteSummary";
 import type { TokenKey, Tokens } from "../lib/types";
 
@@ -36,6 +37,9 @@ export default function Home() {
   const shownRound = state.rounds.find((r) => r.id === shownRoundId) ?? currentRound;
   const isCurrent = shownRound === currentRound;
 
+  // Structure learned from picks and rejects. Sent with the profile; shown in the inspector.
+  const taste = useMemo(() => layoutTaste(state.rounds), [state.rounds]);
+
   useTasteSummary(profile.actions, hasProfile(profile), dispatch);
 
   const generate = useCallback(
@@ -43,11 +47,12 @@ export default function Home() {
       if (loading) return;
       setShownRoundId(null);
       dispatch({ type: "GENERATE_START", brief: text });
+      const payload = toPayload(profile);
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ brief: text, profile: toPayload(profile) }),
+          body: JSON.stringify({ brief: text, profile: payload && { ...payload, layout: taste } }),
         });
         const data: unknown = await res.json();
         if (!res.ok || !isGenerateResponse(data)) throw new Error("generation failed");
@@ -62,7 +67,7 @@ export default function Home() {
         dispatch({ type: "GENERATE_ERROR" });
       }
     },
-    [loading, profile],
+    [loading, profile, taste],
   );
 
   const mark = (type: "PICK" | "REJECT") => (variantId: string) =>
@@ -135,6 +140,7 @@ export default function Home() {
       <aside className={`glass min-h-0 shrink-0 rounded-2xl lg:max-w-[34vw] lg:overflow-y-auto ${panels.rightClass}`}>
         <ProfilePanel
           profile={profile}
+          taste={taste}
           onEdit={edit}
           onToggleLock={(key: TokenKey) => dispatch({ type: "TOGGLE_LOCK", key })}
         />

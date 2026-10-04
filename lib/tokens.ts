@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type {
+  Align,
   BorderStyle,
   ButtonStyle,
   CategoryKey,
@@ -8,6 +9,7 @@ import type {
   HeadingWeight,
   Mode,
   Shadow,
+  Surface,
   TokenKey,
   Tokens,
   Tone,
@@ -22,13 +24,16 @@ export const MODES = ["light", "dark"] as const satisfies readonly Mode[];
 export const BUTTON_STYLES = ["filled", "outline", "soft"] as const satisfies readonly ButtonStyle[];
 export const BORDERS = ["none", "hairline", "bold"] as const satisfies readonly BorderStyle[];
 export const HEADING_WEIGHTS = ["regular", "bold", "heavy"] as const satisfies readonly HeadingWeight[];
+export const ALIGNS = ["left", "center"] as const satisfies readonly Align[];
+export const SURFACES_OPTIONS = ["plain", "tinted", "gradient"] as const satisfies readonly Surface[];
 
 // The first six keep their original order, so change-log order is stable.
 export const TOKEN_KEYS = [
   "radius", "primary", "density", "shadow", "font", "tone", "mode", "buttonStyle", "border", "headingWeight",
+  "align", "surface",
 ] as const satisfies readonly TokenKey[];
 export const CATEGORY_KEYS = [
-  "density", "shadow", "font", "tone", "mode", "buttonStyle", "border", "headingWeight",
+  "density", "shadow", "font", "tone", "mode", "buttonStyle", "border", "headingWeight", "align", "surface",
 ] as const satisfies readonly CategoryKey[];
 
 export const TOKEN_NAMES: Record<TokenKey, string> = {
@@ -42,6 +47,8 @@ export const TOKEN_NAMES: Record<TokenKey, string> = {
   buttonStyle: "Buttons",
   border: "Border",
   headingWeight: "Headings",
+  align: "Alignment",
+  surface: "Surface",
 };
 
 export const CATEGORY_OPTIONS: { [K in CategoryKey]: readonly Tokens[K][] } = {
@@ -53,6 +60,8 @@ export const CATEGORY_OPTIONS: { [K in CategoryKey]: readonly Tokens[K][] } = {
   buttonStyle: BUTTON_STYLES,
   border: BORDERS,
   headingWeight: HEADING_WEIGHTS,
+  align: ALIGNS,
+  surface: SURFACES_OPTIONS,
 };
 
 export const DEFAULT_TOKENS: Tokens = {
@@ -66,6 +75,8 @@ export const DEFAULT_TOKENS: Tokens = {
   buttonStyle: "filled",
   border: "none",
   headingWeight: "bold",
+  align: "left",
+  surface: "plain",
 };
 
 // Round 1 seeds, fixed order: index 0, 1, 2. Deliberately different, including one dark card.
@@ -75,6 +86,7 @@ export const SEEDS: readonly { label: string; tokens: Tokens }[] = [
     tokens: {
       radius: 4, primary: "#111827", density: "spacious", shadow: "none", font: "Inter", tone: "neutral",
       mode: "light", buttonStyle: "outline", border: "hairline", headingWeight: "regular",
+      align: "center", surface: "plain",
     },
   },
   {
@@ -82,6 +94,7 @@ export const SEEDS: readonly { label: string; tokens: Tokens }[] = [
     tokens: {
       radius: 6, primary: "#7c3aed", density: "compact", shadow: "strong", font: "Space Grotesk", tone: "premium",
       mode: "dark", buttonStyle: "filled", border: "bold", headingWeight: "heavy",
+      align: "left", surface: "gradient",
     },
   },
   {
@@ -89,6 +102,7 @@ export const SEEDS: readonly { label: string; tokens: Tokens }[] = [
     tokens: {
       radius: 20, primary: "#16a34a", density: "comfortable", shadow: "soft", font: "DM Sans", tone: "playful",
       mode: "light", buttonStyle: "filled", border: "none", headingWeight: "bold",
+      align: "left", surface: "plain",
     },
   },
 ];
@@ -154,6 +168,14 @@ export function tokensToStyle(tokens: Tokens): CSSProperties {
     outline: { bg: "transparent", fg: primary, line: primary },
     soft: { bg: tint, fg: primary, line: "transparent" },
   };
+  // Card background: plain surface, a faint tint of the primary, or a tint fading to the surface.
+  const cardBg: Record<Surface, string> = {
+    plain: c.surface,
+    tinted: `color-mix(in srgb, ${primary} 7%, ${c.surface})`,
+    gradient: `linear-gradient(165deg, color-mix(in srgb, ${primary} 18%, ${c.surface}), ${c.surface} 62%)`,
+  };
+  const centered = tokens.align === "center";
+
   const main = button[tokens.buttonStyle];
   const second = tokens.buttonStyle === "outline" ? button.soft : button.outline;
 
@@ -183,6 +205,9 @@ export function tokensToStyle(tokens: Tokens): CSSProperties {
     "--st-btn2-bg": second.bg,
     "--st-btn2-line": second.line,
     "--st-heading-weight": HEADING_WEIGHT[tokens.headingWeight],
+    "--st-card-bg": cardBg[tokens.surface],
+    "--st-align": centered ? "center" : "left",
+    "--st-justify": centered ? "center" : "flex-start",
   };
   return vars as CSSProperties;
 }

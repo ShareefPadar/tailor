@@ -6,6 +6,12 @@ export type Mode = "light" | "dark";
 export type ButtonStyle = "filled" | "outline" | "soft";
 export type BorderStyle = "none" | "hairline" | "bold";
 export type HeadingWeight = "regular" | "bold" | "heavy";
+export type Align = "left" | "center";
+export type Surface = "plain" | "tinted" | "gradient";
+
+export type IconName =
+  | "truck" | "package" | "check" | "star" | "zap" | "heart" | "shield" | "clock" | "card" | "user"
+  | "mail" | "pin" | "gift" | "sparkles" | "bell" | "bag" | "dumbbell" | "utensils" | "calendar" | "lock";
 
 export interface Tokens {
   radius: number; // 0–24, even integers
@@ -18,6 +24,8 @@ export interface Tokens {
   buttonStyle: ButtonStyle; // how primary buttons are drawn
   border: BorderStyle; // card and input borders
   headingWeight: HeadingWeight;
+  align: Align; // text and block alignment inside the card
+  surface: Surface; // card background treatment
 }
 export type TokenKey = keyof Tokens;
 // Every token except radius and primary is a category: a fixed set of options with scores.
@@ -34,7 +42,24 @@ export type Node =
   | { type: "stat"; value: string; caption?: string } // a price or key number
   | { type: "rows"; items: { label: string; value: string }[] } // label-value details
   | { type: "steps"; items: string[]; current: number } // progress; current is a 0-based index
-  | { type: "divider" };
+  | { type: "divider" }
+  | { type: "avatar"; name: string; caption?: string } // a person: initials, name, optional line
+  | { type: "icon"; name: IconName } // a single icon in a tinted tile
+  | { type: "row"; children: Node[] } // 2-3 blocks side by side; no cards or rows inside
+  | { type: "progress"; value: number; label?: string } // 0-100
+  | { type: "toggle"; label: string; on: boolean } // a setting with a switch
+  | { type: "chips"; items: string[]; selected: number } // selectable options; selected is a 0-based index
+  | { type: "rating"; value: number; caption?: string } // 0-5 stars
+  | { type: "note"; text: string }; // a tinted callout
+
+export type BlockType = Node["type"];
+
+// What the designer's picks and rejects say about layout, beyond style tokens (see lib/taste.ts).
+export interface LayoutTaste {
+  liked: BlockType[]; // blocks in picked variants, most favoured first
+  avoided: BlockType[]; // blocks that only appeared in rejected variants
+  size: "lean" | "balanced" | "rich" | null; // how many blocks picked cards have; null until a pick
+}
 
 export interface Variant {
   id: string;
@@ -81,4 +106,5 @@ export interface ProfilePayload {
   enforced: TokenKey[];
   confidence: Record<TokenKey, number | null>;
   summary: string | null;
+  layout?: LayoutTaste; // guidance for the AI; never enforced in code
 }

@@ -26,7 +26,7 @@ export function initialProfile(): Profile {
     tokens: { ...DEFAULT_TOKENS },
     locked: {
       radius: false, primary: false, density: false, shadow: false, font: false, tone: false,
-      mode: false, buttonStyle: false, border: false, headingWeight: false,
+      mode: false, buttonStyle: false, border: false, headingWeight: false, align: false, surface: false,
     },
     scores: {
       density: { compact: 0, comfortable: 0, spacious: 0 },
@@ -37,6 +37,8 @@ export function initialProfile(): Profile {
       buttonStyle: { filled: 0, outline: 0, soft: 0 },
       border: { none: 0, hairline: 0, bold: 0 },
       headingWeight: { regular: 0, bold: 0, heavy: 0 },
+      align: { left: 0, center: 0 },
+      surface: { plain: 0, tinted: 0, gradient: 0 },
     },
     radiusSamples: [],
     actions: [],
@@ -194,6 +196,8 @@ export function updateProfile(profile: Profile, action: Action): Profile {
       buttonStyle: { ...profile.scores.buttonStyle },
       border: { ...profile.scores.border },
       headingWeight: { ...profile.scores.headingWeight },
+      align: { ...profile.scores.align },
+      surface: { ...profile.scores.surface },
     },
     samples: profile.radiusSamples.map((s) => ({ ...s })),
     reasons: {},
@@ -303,6 +307,8 @@ export function toPayload(profile: Profile): ProfilePayload | null {
       buttonStyle: confidence(profile, "buttonStyle"),
       border: confidence(profile, "border"),
       headingWeight: confidence(profile, "headingWeight"),
+      align: confidence(profile, "align"),
+      surface: confidence(profile, "surface"),
     },
     summary: profile.summary,
   };

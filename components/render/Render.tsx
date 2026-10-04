@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { tokensToStyle } from "../../lib/tokens";
 import type { Node, Tokens } from "../../lib/types";
+import { Avatar, Chips, IconTile, Note, Progress, Rating, Toggle } from "./Atoms";
 import { Badge, Divider, Rows, Stat, Steps } from "./Blocks";
 
 const HEADING_SIZE = { 1: "text-[24px]", 2: "text-[20px]", 3: "text-[17px]" };
@@ -15,10 +16,10 @@ const BUTTON_STYLE = {
 function NodeView({ node, nested }: { node: Node; nested: boolean }) {
   switch (node.type) {
     case "card": {
-      const box = nested ? "bg-[color:var(--st-surface-2)]" : "bg-[color:var(--st-surface)] [border:var(--st-border-card)]";
+      const box = nested ? "bg-[color:var(--st-surface-2)]" : "[background:var(--st-card-bg)] [border:var(--st-border-card)]";
       return (
         <div
-          className={`flex w-full max-w-[300px] flex-col gap-[var(--st-gap)] rounded-[var(--st-radius)] p-[var(--st-pad)] ${box}`}
+          className={`flex w-full max-w-[300px] flex-col gap-[var(--st-gap)] rounded-[var(--st-radius)] p-[var(--st-pad)] [text-align:var(--st-align)] ${box}`}
           style={nested ? undefined : { boxShadow: "var(--st-shadow)" }}
         >
           {node.children.map((child, i) => (
@@ -43,7 +44,7 @@ function NodeView({ node, nested }: { node: Node; nested: boolean }) {
       );
     case "input":
       return (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 text-left">
           <span className="text-[13px] font-medium">{node.label}</span>
           <div className="rounded-[var(--st-radius-sm)] px-3 py-2 text-[color:var(--st-placeholder)] [border:var(--st-border-input)]">
             {node.placeholder ?? " "}
@@ -52,7 +53,7 @@ function NodeView({ node, nested }: { node: Node; nested: boolean }) {
       );
     case "list":
       return (
-        <ul className="flex flex-col gap-[calc(var(--st-gap)*0.67)]">
+        <ul className="flex flex-col gap-[calc(var(--st-gap)*0.67)] text-left">
           {node.items.map((item, i) => (
             <li key={i} className="flex items-start gap-2">
               <Check size={16} className="mt-[0.2em] shrink-0 text-[color:var(--st-primary)]" />
@@ -71,6 +72,29 @@ function NodeView({ node, nested }: { node: Node; nested: boolean }) {
       return <Steps node={node} />;
     case "divider":
       return <Divider />;
+    case "row":
+      // Blocks side by side, each taking an equal share.
+      return (
+        <div className="flex items-stretch gap-[var(--st-gap)] [&>*]:min-w-0 [&>*]:flex-1">
+          {node.children.map((child, i) => (
+            <NodeView key={i} node={child} nested />
+          ))}
+        </div>
+      );
+    case "avatar":
+      return <Avatar node={node} />;
+    case "icon":
+      return <IconTile node={node} />;
+    case "progress":
+      return <Progress node={node} />;
+    case "toggle":
+      return <Toggle node={node} />;
+    case "chips":
+      return <Chips node={node} />;
+    case "rating":
+      return <Rating node={node} />;
+    case "note":
+      return <Note node={node} />;
     default:
       return null;
   }

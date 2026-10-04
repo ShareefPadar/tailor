@@ -26,7 +26,7 @@ const payload = {
   enforced: ["radius" as const],
   confidence: {
     radius: 1, primary: null, density: null, shadow: null, font: null, tone: null,
-    mode: null, buttonStyle: null, border: null, headingWeight: null,
+    mode: null, buttonStyle: null, border: null, headingWeight: null, align: null, surface: null,
   },
   summary: null,
 };

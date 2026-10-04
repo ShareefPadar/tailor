@@ -1,11 +1,22 @@
 import { z } from "zod";
 import {
-  BORDERS, BUTTON_STYLES, DEFAULT_TOKENS, DENSITIES, FONTS, HEADING_WEIGHTS, MODES, SHADOWS, TONES, TOKEN_KEYS,
+  ALIGNS, BORDERS, BUTTON_STYLES, DEFAULT_TOKENS, DENSITIES, FONTS, HEADING_WEIGHTS, MODES, SHADOWS,
+  SURFACES_OPTIONS, TONES, TOKEN_KEYS,
 } from "./tokens";
-import type { Node, ProfilePayload, Variant } from "./types";
+import type { BlockType, IconName, Node, ProfilePayload, Variant } from "./types";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const NODE_TYPES = ["card", "heading", "text", "button", "input", "list", "badge", "stat", "rows", "steps", "divider"];
+export const NODE_TYPES = [
+  "card", "heading", "text", "button", "input", "list", "badge", "stat", "rows", "steps", "divider",
+  "avatar", "icon", "row", "progress", "toggle", "chips", "rating", "note",
+] as const satisfies readonly BlockType[];
+
+const ICON_NAMES = [
+  "truck", "package", "check", "star", "zap", "heart", "shield", "clock", "card", "user",
+  "mail", "pin", "gift", "sparkles", "bell", "bag", "dumbbell", "utensils", "calendar", "lock",
+] as const satisfies readonly IconName[];
+
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
 const MAX_TEXT = 120;
 const MAX_LIST_ITEMS = 6;
@@ -25,6 +36,11 @@ const text = (max: number) =>
 function hasKnownType(n: unknown): boolean {
   if (typeof n !== "object" || n === null || !("type" in n)) return false;
   return NODE_TYPES.some((t) => t === n.type);
+}
+
+// A row holds blocks side by side, so containers are not allowed inside it.
+function fitsInRow(n: unknown): boolean {
+  return hasKnownType(n) && typeof n === "object" && n !== null && "type" in n && n.type !== "card" && n.type !== "row";
 }
 
 function cardSchema(depth: number) {
@@ -100,6 +116,43 @@ function nodeSchema(depth: number): z.ZodType<Node> {
       // Keep the current step inside the list.
       .transform((n) => ({ ...n, current: Math.min(n.items.length - 1, Math.max(0, Math.round(n.current))) })),
     z.object({ type: z.literal("divider") }),
+    z.object({
+      type: z.literal("avatar"),
+      name: text(40),
+      caption: z.string().transform((s) => s.trim().slice(0, 60)).optional().catch(undefined),
+    }),
+    z.object({ type: z.literal("icon"), name: z.enum(ICON_NAMES).catch("sparkles") }),
+    z.object({
+      type: z.literal("row"),
+      // Same depth as its parent: a row is a layout helper, not a nesting level.
+      children: z.preprocess(
+        (v) => (Array.isArray(v) ? v.filter(fitsInRow).slice(0, 3) : v),
+        z.array(z.lazy(() => nodeSchema(depth))).min(1, "a row needs at least one block"),
+      ),
+    }),
+    z.object({
+      type: z.literal("progress"),
+      value: z.coerce.number().catch(0).transform((n) => Math.round(clamp(n, 0, 100))),
+      label: z.string().transform((s) => s.trim().slice(0, 40)).optional().catch(undefined),
+    }),
+    z.object({ type: z.literal("toggle"), label: text(60), on: z.boolean().catch(false) }),
+    z
+      .object({
+        type: z.literal("chips"),
+        items: z.preprocess(
+          (v) => (Array.isArray(v) ? v.slice(0, 5) : v),
+          z.array(text(24)).min(2, "chips needs at least two items"),
+        ),
+        selected: z.coerce.number().catch(0),
+      })
+      .transform((n) => ({ ...n, selected: clamp(Math.round(n.selected), 0, n.items.length - 1) })),
+    z.object({
+      type: z.literal("rating"),
+      // Half stars are allowed.
+      value: z.coerce.number().catch(5).transform((n) => Math.round(clamp(n, 0, 5) * 2) / 2),
+      caption: z.string().transform((s) => s.trim().slice(0, 40)).optional().catch(undefined),
+    }),
+    z.object({ type: z.literal("note"), text: text(MAX_TEXT) }),
   ]);
 }
 
@@ -117,6 +170,8 @@ const tokensSchema = z.object({
   buttonStyle: z.enum(BUTTON_STYLES).catch(DEFAULT_TOKENS.buttonStyle),
   border: z.enum(BORDERS).catch(DEFAULT_TOKENS.border),
   headingWeight: z.enum(HEADING_WEIGHTS).catch(DEFAULT_TOKENS.headingWeight),
+  align: z.enum(ALIGNS).catch(DEFAULT_TOKENS.align),
+  surface: z.enum(SURFACES_OPTIONS).catch(DEFAULT_TOKENS.surface),
 });
 
 const variantSchema = z.object({
@@ -134,7 +189,8 @@ const responseSchema = z.object({
 });
 
 // Design rules enforced in code, so they hold whatever the model returns:
-// one primary button per variant (the first keeps it), and no leading, trailing or doubled dividers.
+// exactly one primary button per variant that has buttons (the first primary keeps it; if there is
+// none, the first button is promoted), and no leading, trailing or doubled dividers.
 function tidy(node: Node, state: { primaryUsed: boolean }): Node {
   if (node.type === "button") {
     const variant = node.variant ?? "primary";
@@ -143,12 +199,30 @@ function tidy(node: Node, state: { primaryUsed: boolean }): Node {
     state.primaryUsed = true;
     return { ...node, variant: "primary" };
   }
+  if (node.type === "row") return { ...node, children: node.children.map((child) => tidy(child, state)) };
   if (node.type !== "card") return node;
   const children = node.children
     .map((child) => tidy(child, state))
     .filter((child, i, all) => child.type !== "divider" || (i > 0 && all[i - 1].type !== "divider"));
   while (children.length > 1 && children[children.length - 1].type === "divider") children.pop();
   return { ...node, children };
+}
+
+// If a variant has buttons but none is primary, the first one becomes the primary action.
+function promoteFirstButton(node: Node, state: { done: boolean }): Node {
+  if (state.done) return node;
+  if (node.type === "button") {
+    state.done = true;
+    return { ...node, variant: "primary" };
+  }
+  if (node.type !== "card" && node.type !== "row") return node;
+  return { ...node, children: node.children.map((child) => promoteFirstButton(child, state)) };
+}
+
+function applyDesignRules(layout: Node): Node {
+  const state = { primaryUsed: false };
+  const tidied = tidy(layout, state);
+  return state.primaryUsed ? tidied : promoteFirstButton(tidied, { done: false });
 }
 
 export type ValidationResult =
@@ -166,7 +240,7 @@ export function validateVariants(raw: unknown): ValidationResult {
     ok: true,
     variants: result.data.variants.map((v) => ({
       ...v,
-      layout: tidy(v.layout, { primaryUsed: false }),
+      layout: applyDesignRules(v.layout),
       id: crypto.randomUUID(),
       enforced: [],
     })),
@@ -185,6 +259,8 @@ const strictTokens = z.object({
   buttonStyle: z.enum(BUTTON_STYLES),
   border: z.enum(BORDERS),
   headingWeight: z.enum(HEADING_WEIGHTS),
+  align: z.enum(ALIGNS),
+  surface: z.enum(SURFACES_OPTIONS),
 });
 
 const confidence = z.number().min(0).max(1).nullable();
@@ -203,8 +279,17 @@ export const profilePayloadSchema: z.ZodType<ProfilePayload> = z.object({
     buttonStyle: confidence,
     border: confidence,
     headingWeight: confidence,
+    align: confidence,
+    surface: confidence,
   }),
   summary: z.string().max(300).nullable(),
+  layout: z
+    .object({
+      liked: z.array(z.enum(NODE_TYPES)).max(8),
+      avoided: z.array(z.enum(NODE_TYPES)).max(8),
+      size: z.enum(["lean", "balanced", "rich"]).nullable(),
+    })
+    .optional(),
 });
 
 // ---------- /api/summarize ----------

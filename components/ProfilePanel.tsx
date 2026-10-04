@@ -1,23 +1,25 @@
 import { confidence, hasProfile } from "../lib/profile";
-import type { Profile, TokenKey, Tokens } from "../lib/types";
+import type { LayoutTaste, Profile, TokenKey, Tokens } from "../lib/types";
+import { LayoutTastePanel } from "./LayoutTastePanel";
 import { TokenRow } from "./TokenRow";
 import { LABEL } from "./ui";
 
 interface ProfilePanelProps {
   profile: Profile;
+  taste: LayoutTaste;
   onEdit: (patch: Partial<Tokens>) => void;
   onToggleLock: (key: TokenKey) => void;
 }
 
 // Token rows grouped the way a designer thinks about them.
 const GROUPS: { title: string; keys: TokenKey[] }[] = [
-  { title: "Look", keys: ["mode", "primary", "radius", "shadow", "border"] },
-  { title: "Type and spacing", keys: ["font", "headingWeight", "density"] },
+  { title: "Look", keys: ["mode", "primary", "surface", "radius", "shadow", "border"] },
+  { title: "Type and spacing", keys: ["font", "headingWeight", "align", "density"] },
   { title: "Components and voice", keys: ["buttonStyle", "tone"] },
 ];
 
 // The inspector: what Tailor has learned, and the controls to correct it.
-export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProps) {
+export function ProfilePanel({ profile, taste, onEdit, onToggleLock }: ProfilePanelProps) {
   return (
     <section aria-label="Style Profile" className="divide-y divide-hairline">
       <div className="space-y-2 p-4">
@@ -47,6 +49,7 @@ export function ProfilePanel({ profile, onEdit, onToggleLock }: ProfilePanelProp
           ))}
         </div>
       ))}
+      <LayoutTastePanel taste={taste} />
     </section>
   );
 }
